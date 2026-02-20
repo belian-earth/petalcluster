@@ -12,3 +12,4 @@
 ^README\.Rmd$
 ^dev\.R$
 ^data-raw$
+^\.github$
