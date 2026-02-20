@@ -9,3 +9,4 @@ src/Makevars.win
 .quarto
 dev.R
 .claude/
+docs

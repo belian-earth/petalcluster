@@ -5,6 +5,12 @@
 
 <!-- badges: start -->
 
+[![extendr](https://img.shields.io/badge/extendr-%5E0.8.1-276DC2)](https://extendr.github.io/extendr/extendr_api/)
+[![R-CMD-check](https://github.com/belian-earth/petalcluster/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/belian-earth/petalcluster/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/belian-earth/petalcluster/graph/badge.svg)](https://app.codecov.io/gh/belian-earth/petalcluster)
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
 R bindings to the
@@ -75,7 +81,7 @@ Use `xcol` and `ycol` to plot a single pair of variables — here
 longitude vs latitude reveals the geographic structure of the clusters:
 
 ``` r
-plot(quakes_hdbscan, xcol = "long", ycol = "lat")
+plot(quakes_hdbscan, xcol = "long", ycol = "lat", asp=1)
 ```
 
 <img src="man/figures/README-example-xy-1.png" width="100%" />
@@ -98,7 +104,9 @@ Python’s [scikit-learn](https://scikit-learn.org/), across dataset sizes
 from 500 to 50,000 points.
 
 <figure>
-<img src="bench/scaling.png" alt="Scaling benchmark" />
+<img
+src="https://github.com/belian-earth/petalcluster/blob/main/bench/scaling.png?raw=true"
+alt="Scaling benchmark" />
 <figcaption aria-hidden="true">Scaling benchmark</figcaption>
 </figure>
 
