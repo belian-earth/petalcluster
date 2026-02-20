@@ -78,3 +78,40 @@ test_that("plot.petal_dbscan works with 2-column data", {
   res <- petal_dbscan(x, eps = 0.5, min_samples = 5L)
   vdiffr::expect_doppelganger("dbscan-2col", plot(res))
 })
+
+test_that("plot xcol/ycol by name produces scatter plot", {
+  skip_if_not_installed("vdiffr")
+  x <- as.matrix(iris[, 1:4])
+  res <- petal_dbscan(x, eps = 0.5, min_samples = 5L)
+  vdiffr::expect_doppelganger(
+    "dbscan-xcol-name",
+    plot(res, xcol = "Petal.Length", ycol = "Petal.Width")
+  )
+})
+
+test_that("plot xcol/ycol by index produces scatter plot", {
+  skip_if_not_installed("vdiffr")
+  x <- as.matrix(iris[, 1:4])
+  res <- petal_dbscan(x, eps = 0.5, min_samples = 5L)
+  vdiffr::expect_doppelganger("dbscan-xcol-idx", plot(res, xcol = 3, ycol = 4))
+})
+
+test_that("plot errors when only xcol or ycol supplied", {
+  x <- as.matrix(iris[, 1:4])
+  res <- petal_dbscan(x, eps = 0.5, min_samples = 5L)
+  expect_error(plot(res, xcol = 1), "xcol.*ycol.*together")
+  expect_error(plot(res, ycol = 1), "xcol.*ycol.*together")
+})
+
+test_that("plot errors for invalid column name", {
+  x <- as.matrix(iris[, 1:4])
+  res <- petal_dbscan(x, eps = 0.5, min_samples = 5L)
+  expect_error(plot(res, xcol = "nope", ycol = "Sepal.Length"), "not found")
+})
+
+test_that("plot errors for out-of-range column index", {
+  x <- as.matrix(iris[, 1:4])
+  res <- petal_dbscan(x, eps = 0.5, min_samples = 5L)
+  expect_error(plot(res, xcol = 0, ycol = 1), "between 1 and")
+  expect_error(plot(res, xcol = 1, ycol = 99), "between 1 and")
+})
