@@ -11,3 +11,4 @@
 ^LICENSE\.md$
 ^README\.Rmd$
 ^dev\.R$
+^data-raw$

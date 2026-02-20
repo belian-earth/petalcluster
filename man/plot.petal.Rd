@@ -7,14 +7,39 @@
 \alias{plot.petal_optics}
 \title{Plot clustering results}
 \usage{
-\method{plot}{petal_dbscan}(x, ...)
+\method{plot}{petal_dbscan}(
+  x,
+  xcol = NULL,
+  ycol = NULL,
+  pal = grDevices::hcl.colors(max(x$n_clusters, 2L), "Roma"),
+  ...
+)
 
-\method{plot}{petal_hdbscan}(x, ...)
+\method{plot}{petal_hdbscan}(
+  x,
+  xcol = NULL,
+  ycol = NULL,
+  pal = grDevices::hcl.colors(max(x$n_clusters, 2L), "Roma"),
+  ...
+)
 
-\method{plot}{petal_optics}(x, ...)
+\method{plot}{petal_optics}(
+  x,
+  xcol = NULL,
+  ycol = NULL,
+  pal = grDevices::hcl.colors(max(x$n_clusters, 2L), "Roma"),
+  ...
+)
 }
 \arguments{
 \item{x}{A clustering result object.}
+
+\item{xcol, ycol}{Optional column name or index to plot on the x/y axis.
+When both are supplied, a single scatter plot is produced instead of a
+pairs matrix.}
+
+\item{pal}{Character vector of colours for clusters. Defaults to
+\code{grDevices::hcl.colors(n, "Roma")} where \code{n} is the number of clusters.}
 
 \item{...}{Additional arguments passed to \code{\link[=pairs]{pairs()}} or \code{\link[=plot.default]{plot.default()}}.}
 }
@@ -25,4 +50,9 @@
 Produces a scatter plot matrix (pairs plot) of clustered data, colored by
 cluster assignment. For 2-column data a single scatter plot is produced
 instead. Noise points (\code{NA} cluster) are shown as grey crosses.
+}
+\details{
+When \code{xcol} and \code{ycol} are supplied, a single scatter plot of those two
+variables is produced instead of the full pairs matrix. Columns can be
+specified by name or integer index.
 }

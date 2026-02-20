@@ -4,9 +4,24 @@
 \name{petalcluster-package}
 \alias{petalcluster}
 \alias{petalcluster-package}
-\title{petalcluster: Density-Based Clustering via Rust}
+\title{Density-Based Clustering via Rust}
 \description{
-R bindings to the Rust petal-clustering library providing DBSCAN, HDBSCAN, and OPTICS density-based clustering algorithms.
+R bindings to the
+\href{https://github.com/petabi/petal-clustering}{petal-clustering} Rust
+crate by \href{https://github.com/petabi}{Petabi, Inc.}, providing fast
+implementations of three density-based clustering algorithms:
+\itemize{
+\item \code{\link[=petal_dbscan]{petal_dbscan()}} — DBSCAN: finds clusters as dense regions separated by
+areas of lower density.
+\item \code{\link[=petal_hdbscan]{petal_hdbscan()}} — HDBSCAN: hierarchical extension of DBSCAN that adapts
+to clusters of varying density.
+\item \code{\link[=petal_optics]{petal_optics()}} — OPTICS: produces a reachability ordering that captures
+cluster structure at multiple density thresholds.
+}
+
+All three accept numeric matrices or data frames, support Euclidean and
+cosine distance metrics, and return S3 objects with \code{print()} and \code{plot()}
+methods.
 }
 \author{
 \strong{Maintainer}: First Last \email{first.last@example.com}
