@@ -6,3 +6,8 @@
 ^src/rust/target$
 ^src/Makevars$
 ^src/Makevars\.win$
+^\.claude$
+^bench$
+^LICENSE\.md$
+^README\.Rmd$
+^dev\.R$
