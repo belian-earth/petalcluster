@@ -1,0 +1,35 @@
+url: https://belian-earth.github.io/petalcluster/
+template:
+  bootstrap: 5
+  bootswatch: cosmo
+  bslib:
+    primary: '#4a6741'
+navbar:
+  structure:
+    left:
+    - intro
+    - reference
+    - news
+    right:
+    - search
+    - github
+  components:
+    github:
+      icon: fa-github
+      href: https://github.com/belian-earth/petalcluster
+      aria-label: GitHub
+reference:
+- title: Clustering
+  desc: Density-based clustering algorithms.
+  contents:
+  - petal_dbscan
+  - petal_hdbscan
+  - petal_optics
+- title: Visualisation
+  desc: Plot methods for clustering results.
+  contents:
+  - plot.petal
+- title: Data
+  desc: Bundled datasets.
+  contents:
+  - rings
