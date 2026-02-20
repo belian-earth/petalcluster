@@ -27,9 +27,8 @@ reference:
   - petal_optics
 - title: Visualisation
   desc: Plot methods for clustering results.
-  contents:
-  - plot.petal
+  contents: plot.petal
 - title: Data
   desc: Bundled datasets.
-  contents:
-  - rings
+  contents: rings
+
