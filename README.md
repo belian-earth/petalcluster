@@ -104,7 +104,9 @@ Python’s [scikit-learn](https://scikit-learn.org/), across dataset sizes
 from 500 to 50,000 points.
 
 <figure>
-<img src="bench/scaling.png" alt="Scaling benchmark" />
+<img
+src="https://github.com/belian-earth/petalcluster/blob/main/bench/scaling.png?raw=true"
+alt="Scaling benchmark" />
 <figcaption aria-hidden="true">Scaling benchmark</figcaption>
 </figure>
 

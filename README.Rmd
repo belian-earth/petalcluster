@@ -98,7 +98,7 @@ particularly at scale. The plot below compares wall-clock time against the
 [scikit-learn](https://scikit-learn.org/), across dataset sizes from 500 to
 50,000 points.
 
-![Scaling benchmark](bench/scaling.png)
+![Scaling benchmark](https://github.com/belian-earth/petalcluster/blob/main/bench/scaling.png?raw=true)
 
 ## Acknowledgements
 
