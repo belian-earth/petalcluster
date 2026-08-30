@@ -37,3 +37,15 @@ print.shoal_hdbscan <- function(x, ...) {
 
   invisible(x)
 }
+
+#' @rdname print.shoal
+#' @export
+print.shoal_kmeans <- function(x, ...) {
+  NextMethod()
+
+  inertia <- signif(x$inertia, 5L)
+  cli::cli_text("Within-cluster sum of squares: {inertia}")
+  cli::cli_text("Cluster sizes: {x$sizes}")
+
+  invisible(x)
+}

@@ -8,6 +8,8 @@
 #'
 #' Currently available:
 #'
+#' - [shoal_kmeans()] — k-means: partitions into a fixed number of clusters, and
+#'   can assign new observations to them.
 #' - [shoal_dbscan()] — DBSCAN: finds clusters as dense regions separated by
 #'   areas of lower density.
 #' - [shoal_hdbscan()] — HDBSCAN: hierarchical extension of DBSCAN that adapts
@@ -17,7 +19,8 @@
 #' - [shoal_dist()] — pairwise distance matrices, returning a standard
 #'   [stats::dist] object.
 #'
-#' The density-based algorithms take numeric matrices or data frames directly.
+#' k-means and the density-based algorithms take numeric matrices or data frames
+#' directly.
 #' Hierarchical clustering works from a distance matrix, so it accepts anything
 #' [stats::dist()] would produce as well as raw data.
 #'
@@ -29,7 +32,8 @@
 #' \href{https://github.com/petabi/petal-clustering}{petal-clustering} Rust
 #' crate by \href{https://github.com/petabi}{Petabi, Inc.}; hierarchical
 #' clustering is bound to \href{https://github.com/diffeo/kodama}{kodama}, a
-#' Rust port of \emph{fastcluster}.
+#' Rust port of \emph{fastcluster}; and k-means to
+#' \href{https://github.com/rust-ml/linfa}{linfa}.
 #'
 #' @keywords internal
 #' @aliases shoal-package

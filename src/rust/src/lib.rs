@@ -5,7 +5,10 @@ use petal_neighbors::distance::{Cosine, Euclidean};
 mod convert;
 mod dist;
 mod hclust;
-use convert::{assignment_vector, partial_labels_from_list, rmatrix_to_array2};
+mod kmeans;
+use convert::{
+    assignment_vector, partial_labels_from_list, rmatrix_to_array2, rmatrix_to_array2_linfa,
+};
 
 #[extendr]
 fn rust_dbscan(x: RMatrix<f64>, eps: f64, min_samples: i32, metric: &str) -> Integers {
@@ -113,10 +116,69 @@ fn rust_hclust(d: Vec<f64>, n: i32, method: &str) -> List {
     list!(merge = merge, height = out.height, order = out.order)
 }
 
+/// k-means clustering.
+///
+/// Returns the assignment vector, centroids, inertia and cluster sizes.
+#[extendr]
+fn rust_kmeans(
+    x: RMatrix<f64>,
+    k: i32,
+    init: &str,
+    n_runs: i32,
+    max_iter: i32,
+    tolerance: f64,
+    seed: f64,
+) -> Result<List> {
+    let data = rmatrix_to_array2_linfa(x);
+
+    let fit = kmeans::fit(
+        data,
+        k as usize,
+        kmeans::init_from_name(init),
+        n_runs as usize,
+        max_iter as u64,
+        tolerance,
+        seed as u64,
+    )
+    .map_err(|e| Error::Other(format!("k-means failed: {e}")))?;
+
+    let n_clusters = fit.centroids.nrows();
+    let n_features = fit.centroids.ncols();
+
+    let cluster: Vec<Rint> = fit
+        .assignments
+        .iter()
+        .map(|&c| Rint::from((c + 1) as i32)) // 1-indexed for R
+        .collect();
+
+    let centroids = RMatrix::new_matrix(n_clusters, n_features, |r, c| fit.centroids[[r, c]]);
+
+    Ok(list!(
+        cluster = cluster,
+        centroids = centroids,
+        inertia = fit.inertia,
+        sizes = fit.sizes
+    ))
+}
+
+/// Assign observations to their nearest centroid. Backs `predict()`.
+#[extendr]
+fn rust_nearest_centroid(x: RMatrix<f64>, centroids: RMatrix<f64>) -> Integers {
+    let data = rmatrix_to_array2_linfa(x);
+    let centroids = rmatrix_to_array2_linfa(centroids);
+
+    kmeans::nearest_centroid(&data, &centroids)
+        .into_iter()
+        .map(Rint::from)
+        .collect()
+}
+
 extendr_module! {
     mod shoal;
     fn rust_dbscan;
     fn rust_hdbscan;
     fn rust_dist;
     fn rust_hclust;
+    fn rust_kmeans;
+    fn rust_nearest_centroid;
 }

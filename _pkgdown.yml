@@ -22,6 +22,7 @@ reference:
 - title: Clustering
   desc: Clustering algorithms.
   contents:
+  - shoal_kmeans
   - shoal_dbscan
   - shoal_hdbscan
   - shoal_hclust
@@ -29,10 +30,11 @@ reference:
   desc: Pairwise distance matrices.
   contents: shoal_dist
 - title: Methods
-  desc: Shared print and plot methods for clustering results.
+  desc: Shared print and plot methods, and prediction for centroid models.
   contents:
   - plot.shoal
   - print.shoal
+  - predict.shoal_kmeans
 - title: Data
   desc: Bundled datasets.
   contents: rings

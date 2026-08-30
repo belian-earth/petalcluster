@@ -1,4 +1,7 @@
-check_numeric_matrix <- function(x, call = rlang::caller_env()) {
+check_numeric_matrix <- function(x, na_action = c("drop", "error"),
+                                 call = rlang::caller_env()) {
+  na_action <- match.arg(na_action)
+
   if (is.data.frame(x)) {
     numeric_cols <- vapply(x, is.numeric, logical(1L))
     if (sum(numeric_cols) < 2L) {
@@ -29,6 +32,12 @@ check_numeric_matrix <- function(x, call = rlang::caller_env()) {
   incomplete <- !stats::complete.cases(x)
   if (any(incomplete)) {
     n_drop <- sum(incomplete)
+    if (identical(na_action, "error")) {
+      cli::cli_abort(
+        "{.arg x} contains {n_drop} row{?s} with missing values.",
+        call = call
+      )
+    }
     cli::cli_warn(
       c("Removed {n_drop} row{?s} containing missing values.",
         "i" = "{nrow(x) - n_drop} complete row{?s} remaining."),
@@ -58,6 +67,16 @@ check_positive_integer <- function(x, arg = rlang::caller_arg(x), call = rlang::
   }
   if (is.na(x) || x < 1L) {
     cli::cli_abort("{.arg {arg}} must be a positive integer.", call = call)
+  }
+  invisible(x)
+}
+
+check_count <- function(x, arg = rlang::caller_arg(x), call = rlang::caller_env()) {
+  if (!rlang::is_scalar_integerish(x)) {
+    cli::cli_abort("{.arg {arg}} must be a single integer.", call = call)
+  }
+  if (is.na(x) || x < 0L) {
+    cli::cli_abort("{.arg {arg}} must be a non-negative integer.", call = call)
   }
   invisible(x)
 }

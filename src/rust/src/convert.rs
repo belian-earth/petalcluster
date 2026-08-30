@@ -14,6 +14,23 @@ pub fn rmatrix_to_array2(x: RMatrix<f64>) -> Array2<f64> {
     Array2::from_shape_vec((nrow, ncol).f(), data).expect("shape mismatch in matrix conversion")
 }
 
+/// Convert an extendr RMatrix<f64> to an ndarray 0.16 Array2<f64>, for linfa.
+///
+/// linfa is on ndarray 0.16 while petal-* are on 0.17, so both are in the tree
+/// and their `Array2` types are distinct. This mirrors `rmatrix_to_array2` for
+/// the older version.
+pub fn rmatrix_to_array2_linfa(x: RMatrix<f64>) -> ndarray_linfa::Array2<f64> {
+    let nrow = x.nrows();
+    let ncol = x.ncols();
+    let data: Vec<f64> = x.data().to_vec();
+
+    // Both ndarray versions' ShapeBuilder are in scope here, so `.f()` has to be
+    // qualified to say which one is meant.
+    let shape = <(usize, usize) as ndarray_linfa::ShapeBuilder>::f((nrow, ncol));
+    ndarray_linfa::Array2::from_shape_vec(shape, data)
+        .expect("shape mismatch in matrix conversion")
+}
+
 /// Build a 1-indexed cluster assignment vector, `NA` for noise.
 ///
 /// Clusters are renumbered to 1..k, sorted by their original key so the
