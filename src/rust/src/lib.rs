@@ -7,6 +7,7 @@ mod dist;
 mod gmm;
 mod hclust;
 mod kmeans;
+mod metrics;
 use convert::{
     assignment_vector, partial_labels_from_list, rmatrix_to_array2, rmatrix_to_array2_linfa,
 };
@@ -214,6 +215,56 @@ fn rust_gmm(
     ))
 }
 
+/// Per-observation silhouette widths from a condensed distance matrix.
+///
+/// `cluster` arrives 1-indexed from R and is returned to R the same way.
+#[extendr]
+fn rust_silhouette(d: Vec<f64>, n: i32, cluster: Vec<i32>, k: i32) -> List {
+    let n = n as usize;
+    let k = k as usize;
+    let zero_based: Vec<usize> = cluster.iter().map(|&c| (c - 1) as usize).collect();
+
+    let (widths, neighbours) = metrics::silhouette(&d, n, &zero_based, k);
+
+    // usize::MAX marks "no neighbouring cluster"; that becomes NA in R.
+    let neighbour: Vec<Rint> = neighbours
+        .into_iter()
+        .map(|nb| {
+            if nb == usize::MAX {
+                Rint::na()
+            } else {
+                Rint::from((nb + 1) as i32)
+            }
+        })
+        .collect();
+
+    list!(width = widths, neighbour = neighbour)
+}
+
+/// Calinski-Harabasz and Davies-Bouldin indices.
+#[extendr]
+fn rust_cluster_indices(x: RMatrix<f64>, cluster: Vec<i32>, k: i32) -> List {
+    let data = rmatrix_to_array2(x);
+    let n = data.nrows();
+    let p = data.ncols();
+    let k = k as usize;
+
+    // Row-major copy: the metrics walk observations, not features.
+    let mut flat = Vec::with_capacity(n * p);
+    for i in 0..n {
+        for f in 0..p {
+            flat.push(data[[i, f]]);
+        }
+    }
+
+    let zero_based: Vec<usize> = cluster.iter().map(|&c| (c - 1) as usize).collect();
+
+    list!(
+        calinski_harabasz = metrics::calinski_harabasz(&flat, n, p, &zero_based, k),
+        davies_bouldin = metrics::davies_bouldin(&flat, n, p, &zero_based, k)
+    )
+}
+
 extendr_module! {
     mod shoal;
     fn rust_dbscan;
@@ -223,4 +274,6 @@ extendr_module! {
     fn rust_kmeans;
     fn rust_nearest_centroid;
     fn rust_gmm;
+    fn rust_silhouette;
+    fn rust_cluster_indices;
 }

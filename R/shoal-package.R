@@ -20,6 +20,8 @@
 #'   methods, returning a standard [stats::hclust] object.
 #' - [shoal_dist()] — pairwise distance matrices, returning a standard
 #'   [stats::dist] object.
+#' - [shoal_silhouette()] and [shoal_metrics()] — validity measures for choosing
+#'   the number of clusters.
 #'
 #' k-means and the density-based algorithms take numeric matrices or data frames
 #' directly.

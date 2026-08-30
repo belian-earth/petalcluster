@@ -30,6 +30,11 @@ reference:
 - title: Distances
   desc: Pairwise distance matrices.
   contents: shoal_dist
+- title: Validation
+  desc: Assessing a clustering, and choosing the number of clusters.
+  contents:
+  - shoal_silhouette
+  - shoal_metrics
 - title: Methods
   desc: Shared print and plot methods, and prediction for centroid models.
   contents:

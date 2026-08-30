@@ -24,5 +24,9 @@ rust_nearest_centroid <- function(x, centroids) .Call(wrap__rust_nearest_centroi
 
 rust_gmm <- function(x, k, init, n_runs, max_iter, tolerance, reg_covariance, seed) .Call(wrap__rust_gmm, x, k, init, n_runs, max_iter, tolerance, reg_covariance, seed)
 
+rust_silhouette <- function(d, n, cluster, k) .Call(wrap__rust_silhouette, d, n, cluster, k)
+
+rust_cluster_indices <- function(x, cluster, k) .Call(wrap__rust_cluster_indices, x, cluster, k)
+
 
 # nolint end
