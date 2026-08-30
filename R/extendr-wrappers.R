@@ -22,5 +22,7 @@ rust_kmeans <- function(x, k, init, n_runs, max_iter, tolerance, seed) .Call(wra
 
 rust_nearest_centroid <- function(x, centroids) .Call(wrap__rust_nearest_centroid, x, centroids)
 
+rust_gmm <- function(x, k, init, n_runs, max_iter, tolerance, reg_covariance, seed) .Call(wrap__rust_gmm, x, k, init, n_runs, max_iter, tolerance, reg_covariance, seed)
+
 
 # nolint end

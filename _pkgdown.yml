@@ -23,6 +23,7 @@ reference:
   desc: Clustering algorithms.
   contents:
   - shoal_kmeans
+  - shoal_gmm
   - shoal_dbscan
   - shoal_hdbscan
   - shoal_hclust
@@ -35,6 +36,8 @@ reference:
   - plot.shoal
   - print.shoal
   - predict.shoal_kmeans
+  - predict.shoal_gmm
+  - logLik.shoal_gmm
 - title: Data
   desc: Bundled datasets.
   contents: rings

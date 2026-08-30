@@ -4,6 +4,7 @@ use petal_neighbors::distance::{Cosine, Euclidean};
 
 mod convert;
 mod dist;
+mod gmm;
 mod hclust;
 mod kmeans;
 use convert::{
@@ -173,6 +174,46 @@ fn rust_nearest_centroid(x: RMatrix<f64>, centroids: RMatrix<f64>) -> Integers {
         .collect()
 }
 
+/// Gaussian mixture model.
+///
+/// Returns only the fitted parameters; responsibilities, assignments and the
+/// log-likelihood are derived from them on the R side.
+#[extendr]
+fn rust_gmm(
+    x: RMatrix<f64>,
+    k: i32,
+    init: &str,
+    n_runs: i32,
+    max_iter: i32,
+    tolerance: f64,
+    reg_covariance: f64,
+    seed: f64,
+) -> Result<List> {
+    let data = rmatrix_to_array2_linfa(x);
+
+    let fit = gmm::fit(
+        data,
+        k as usize,
+        gmm::init_from_name(init),
+        n_runs as u64,
+        max_iter as u64,
+        tolerance,
+        reg_covariance,
+        seed as u64,
+    )
+    .map_err(|e| Error::Other(format!("Gaussian mixture fit failed: {e}")))?;
+
+    let n_clusters = fit.means.nrows();
+    let n_features = fit.means.ncols();
+    let means = RMatrix::new_matrix(n_clusters, n_features, |r, c| fit.means[[r, c]]);
+
+    Ok(list!(
+        weights = fit.weights,
+        means = means,
+        covariances = fit.covariances
+    ))
+}
+
 extendr_module! {
     mod shoal;
     fn rust_dbscan;
@@ -181,4 +222,5 @@ extendr_module! {
     fn rust_hclust;
     fn rust_kmeans;
     fn rust_nearest_centroid;
+    fn rust_gmm;
 }

@@ -49,3 +49,16 @@ print.shoal_kmeans <- function(x, ...) {
 
   invisible(x)
 }
+
+#' @rdname print.shoal
+#' @export
+print.shoal_gmm <- function(x, ...) {
+  NextMethod()
+
+  loglik <- signif(x$loglik, 6L)
+  bic <- signif(stats::BIC(x), 6L)
+  cli::cli_text("Log-likelihood: {loglik}, BIC: {bic}")
+  cli::cli_text("Mixing proportions: {signif(x$weights, 3L)}")
+
+  invisible(x)
+}
