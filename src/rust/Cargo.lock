@@ -184,16 +184,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "petalcluster"
-version = "0.1.0"
-dependencies = [
- "extendr-api",
- "ndarray",
- "petal-clustering",
- "petal-neighbors",
-]
-
-[[package]]
 name = "portable-atomic"
 version = "1.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -280,6 +270,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "shoal"
+version = "0.1.0"
+dependencies = [
+ "extendr-api",
+ "ndarray",
+ "petal-clustering",
+ "petal-neighbors",
 ]
 
 [[package]]

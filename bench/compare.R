@@ -23,12 +23,12 @@ dims_values <- sort(unique(all_data$dims))
 # -- Tables --------------------------------------------------------------------
 
 cat(strrep("=", 75), "\n")
-cat("Cross-language Benchmark: petalcluster vs dbscan (R) vs sklearn (Python)\n")
+cat("Cross-language Benchmark: shoal vs dbscan (R) vs sklearn (Python)\n")
 cat(strrep("=", 75), "\n\n")
 
 for (d in dims_values) {
   cat(sprintf("***** d = %d dimensions *****\n\n", d))
-  for (algo in c("DBSCAN", "HDBSCAN", "OPTICS")) {
+  for (algo in c("DBSCAN", "HDBSCAN")) {
     cat("---", algo, paste0(strrep("-", 60)), "\n")
     sub <- all_data[all_data$algorithm == algo & all_data$dims == d, ]
 
@@ -47,10 +47,10 @@ for (d in dims_values) {
     wide <- wide[order(wide$n), ]
 
     if ("dbscan" %in% names(wide)) {
-      wide$"vs_dbscan(R)" <- round(wide$dbscan / wide$petalcluster, 2)
+      wide$"vs_dbscan(R)" <- round(wide$dbscan / wide$shoal, 2)
     }
     if ("sklearn" %in% names(wide)) {
-      wide$"vs_sklearn" <- round(wide$sklearn / wide$petalcluster, 2)
+      wide$"vs_sklearn" <- round(wide$sklearn / wide$shoal, 2)
     }
 
     print(wide, row.names = FALSE, digits = 3)
@@ -58,17 +58,17 @@ for (d in dims_values) {
   }
 }
 
-cat("Speedup > 1 means petalcluster is faster.\n\n")
+cat("Speedup > 1 means shoal is faster.\n\n")
 
 # -- Scaling plot (stacked: one row per dimensionality) ------------------------
 
 pkg_styles <- list(
-  petalcluster = list(col = "#E41A1C", pch = 19, lty = 1),
+  shoal = list(col = "#E41A1C", pch = 19, lty = 1),
   dbscan       = list(col = "#377EB8", pch = 17, lty = 2),
   sklearn      = list(col = "#4DAF4A", pch = 15, lty = 3)
 )
 
-algos <- c("DBSCAN", "HDBSCAN", "OPTICS")
+algos <- c("DBSCAN", "HDBSCAN")
 packages <- unique(all_data$package)
 n_dims <- length(dims_values)
 
@@ -112,7 +112,7 @@ for (d in dims_values) {
     if (algo == algos[1] && d == dims_values[1]) {
       legend(
         "topleft",
-        legend = c("petalcluster (Rust)", "dbscan (R/C++)", "sklearn (Python)"),
+        legend = c("shoal (Rust)", "dbscan (R/C++)", "sklearn (Python)"),
         col = vapply(pkg_styles, `[[`, character(1), "col"),
         pch = vapply(pkg_styles, `[[`, numeric(1), "pch"),
         lty = vapply(pkg_styles, `[[`, numeric(1), "lty"),

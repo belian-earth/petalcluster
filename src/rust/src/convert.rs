@@ -14,29 +14,19 @@ pub fn rmatrix_to_array2(x: RMatrix<f64>) -> Array2<f64> {
     Array2::from_shape_vec((nrow, ncol).f(), data).expect("shape mismatch in matrix conversion")
 }
 
-/// Convert clustering output (clusters map + noise indices) into an R list.
+/// Build a 1-indexed cluster assignment vector, `NA` for noise.
 ///
-/// Returns a list with:
-///   - cluster: integer vector (1-indexed, NA for noise)
-///   - n_clusters: integer scalar
-///   - n_noise: integer scalar
-pub fn clusters_to_list(
-    clusters: &HashMap<usize, Vec<usize>>,
-    noise: &[usize],
-    n_points: usize,
-) -> List {
-    let n_clusters = clusters.len() as i32;
-    let n_noise = noise.len() as i32;
-
-    // Build assignment vector, default NA
+/// Clusters are renumbered to 1..k, sorted by their original key so the
+/// labelling is deterministic across runs. Cluster and noise counts are derived
+/// on the R side from this vector, so they are not returned here.
+pub fn assignment_vector(clusters: &HashMap<usize, Vec<usize>>, n_points: usize) -> Vec<Rint> {
     let mut assignment = vec![Rint::na(); n_points];
 
-    // Renumber clusters to 1..k (sorted by original key for determinism)
     let mut keys: Vec<usize> = clusters.keys().copied().collect();
     keys.sort_unstable();
 
     for (new_id, key) in keys.iter().enumerate() {
-        let r_id = Rint::from((new_id + 1) as i32); // 1-indexed
+        let r_id = Rint::from((new_id + 1) as i32); // 1-indexed for R
         if let Some(indices) = clusters.get(key) {
             for &idx in indices {
                 if idx < n_points {
@@ -46,47 +36,7 @@ pub fn clusters_to_list(
         }
     }
 
-    list!(
-        cluster = assignment,
-        n_clusters = n_clusters,
-        n_noise = n_noise
-    )
-}
-
-/// Convert clustering output with outlier scores (HDBSCAN) into an R list.
-pub fn clusters_to_list_with_scores(
-    clusters: &HashMap<usize, Vec<usize>>,
-    noise: &[usize],
-    outlier_scores: &[f64],
-    n_points: usize,
-) -> List {
-    let n_clusters = clusters.len() as i32;
-    let n_noise = noise.len() as i32;
-
-    let mut assignment = vec![Rint::na(); n_points];
-
-    let mut keys: Vec<usize> = clusters.keys().copied().collect();
-    keys.sort_unstable();
-
-    for (new_id, key) in keys.iter().enumerate() {
-        let r_id = Rint::from((new_id + 1) as i32);
-        if let Some(indices) = clusters.get(key) {
-            for &idx in indices {
-                if idx < n_points {
-                    assignment[idx] = r_id;
-                }
-            }
-        }
-    }
-
-    let scores: Vec<Rfloat> = outlier_scores.iter().map(|&s| Rfloat::from(s)).collect();
-
-    list!(
-        cluster = assignment,
-        n_clusters = n_clusters,
-        n_noise = n_noise,
-        outlier_scores = scores
-    )
+    assignment
 }
 
 /// Convert an R named list of partial labels to a HashMap<usize, Vec<usize>>.

@@ -1,31 +1,29 @@
 use extendr_api::prelude::*;
-use petal_clustering::{Dbscan, Fit, HDbscan, Optics};
+use petal_clustering::{Dbscan, Fit, HDbscan};
 use petal_neighbors::distance::{Cosine, Euclidean};
 
 mod convert;
-use convert::{
-    clusters_to_list, clusters_to_list_with_scores, partial_labels_from_list, rmatrix_to_array2,
-};
+use convert::{assignment_vector, partial_labels_from_list, rmatrix_to_array2};
 
 #[extendr]
-fn rust_dbscan(x: RMatrix<f64>, eps: f64, min_samples: i32, metric: &str) -> List {
+fn rust_dbscan(x: RMatrix<f64>, eps: f64, min_samples: i32, metric: &str) -> Integers {
     let data = rmatrix_to_array2(x);
     let n_points = data.nrows();
     let min_samples = min_samples as usize;
 
-    match metric {
+    let clusters = match metric {
         "euclidean" => {
             let mut model = Dbscan::new(eps, min_samples, Euclidean::default());
-            let (clusters, noise) = model.fit(&data, None);
-            clusters_to_list(&clusters, &noise, n_points)
+            model.fit(&data, None).0
         }
         "cosine" => {
             let mut model = Dbscan::new(eps, min_samples, Cosine::default());
-            let (clusters, noise) = model.fit(&data, None);
-            clusters_to_list(&clusters, &noise, n_points)
+            model.fit(&data, None).0
         }
         _ => panic!("Unknown metric: {metric}"),
-    }
+    };
+
+    Integers::from_values(assignment_vector(&clusters, n_points))
 }
 
 #[extendr]
@@ -48,7 +46,7 @@ fn rust_hdbscan(
         Nullable::Null => None,
     };
 
-    match metric {
+    let (clusters, scores) = match metric {
         "euclidean" => {
             let mut model = HDbscan {
                 alpha,
@@ -57,8 +55,8 @@ fn rust_hdbscan(
                 metric: Euclidean::default(),
                 boruvka,
             };
-            let (clusters, noise, scores) = model.fit(&data, labels.as_ref());
-            clusters_to_list_with_scores(&clusters, &noise, &scores, n_points)
+            let (clusters, _noise, scores) = model.fit(&data, labels.as_ref());
+            (clusters, scores)
         }
         "cosine" => {
             let mut model = HDbscan {
@@ -68,37 +66,20 @@ fn rust_hdbscan(
                 metric: Cosine::default(),
                 boruvka,
             };
-            let (clusters, noise, scores) = model.fit(&data, labels.as_ref());
-            clusters_to_list_with_scores(&clusters, &noise, &scores, n_points)
+            let (clusters, _noise, scores) = model.fit(&data, labels.as_ref());
+            (clusters, scores)
         }
         _ => panic!("Unknown metric: {metric}"),
-    }
-}
+    };
 
-#[extendr]
-fn rust_optics(x: RMatrix<f64>, eps: f64, min_samples: i32, metric: &str) -> List {
-    let data = rmatrix_to_array2(x);
-    let n_points = data.nrows();
-    let min_samples = min_samples as usize;
+    let assignment = assignment_vector(&clusters, n_points);
+    let outlier_scores: Vec<Rfloat> = scores.iter().map(|&s| Rfloat::from(s)).collect();
 
-    match metric {
-        "euclidean" => {
-            let mut model = Optics::new(eps, min_samples, Euclidean::default());
-            let (clusters, noise) = model.fit(&data, None);
-            clusters_to_list(&clusters, &noise, n_points)
-        }
-        "cosine" => {
-            let mut model = Optics::new(eps, min_samples, Cosine::default());
-            let (clusters, noise) = model.fit(&data, None);
-            clusters_to_list(&clusters, &noise, n_points)
-        }
-        _ => panic!("Unknown metric: {metric}"),
-    }
+    list!(cluster = assignment, outlier_scores = outlier_scores)
 }
 
 extendr_module! {
-    mod petalcluster;
+    mod shoal;
     fn rust_dbscan;
     fn rust_hdbscan;
-    fn rust_optics;
 }

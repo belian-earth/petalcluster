@@ -18,31 +18,15 @@
 #'
 #' @returns `x`, invisibly.
 #'
-#' @name plot.petal
+#' @name plot.shoal
 NULL
 
-#' @rdname plot.petal
+#' @rdname plot.shoal
 #' @export
-plot.petal_dbscan <- function(x, xcol = NULL, ycol = NULL,
-                              pal = grDevices::hcl.colors(max(x$n_clusters, 2L), "Roma"),
-                              ...) {
-  plot_clusters(x, title = "DBSCAN", xcol = xcol, ycol = ycol, pal = pal, ...)
-}
-
-#' @rdname plot.petal
-#' @export
-plot.petal_hdbscan <- function(x, xcol = NULL, ycol = NULL,
-                               pal = grDevices::hcl.colors(max(x$n_clusters, 2L), "Roma"),
-                               ...) {
-  plot_clusters(x, title = "HDBSCAN", xcol = xcol, ycol = ycol, pal = pal, ...)
-}
-
-#' @rdname plot.petal
-#' @export
-plot.petal_optics <- function(x, xcol = NULL, ycol = NULL,
-                              pal = grDevices::hcl.colors(max(x$n_clusters, 2L), "Roma"),
-                              ...) {
-  plot_clusters(x, title = "OPTICS", xcol = xcol, ycol = ycol, pal = pal, ...)
+plot.shoal_clustering <- function(x, xcol = NULL, ycol = NULL,
+                                  pal = grDevices::hcl.colors(max(x$n_clusters, 2L), "Roma"),
+                                  ...) {
+  plot_clusters(x, title = x$algorithm, xcol = xcol, ycol = ycol, pal = pal, ...)
 }
 
 #' Build cluster colour/pch vectors

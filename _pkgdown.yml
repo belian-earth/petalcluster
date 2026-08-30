@@ -22,12 +22,13 @@ reference:
 - title: Clustering
   desc: Density-based clustering algorithms.
   contents:
-  - petal_dbscan
-  - petal_hdbscan
-  - petal_optics
-- title: Visualisation
-  desc: Plot methods for clustering results.
-  contents: plot.petal
+  - shoal_dbscan
+  - shoal_hdbscan
+- title: Methods
+  desc: Shared print and plot methods for clustering results.
+  contents:
+  - plot.shoal
+  - print.shoal
 - title: Data
   desc: Bundled datasets.
   contents: rings

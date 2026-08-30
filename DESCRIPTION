@@ -1,10 +1,13 @@
-Package: petalcluster
-Title: Density-Based Clustering via Rust
+Package: shoal
+Title: High-Performance Clustering via Rust
 Version: 0.0.0.1
 Authors@R:
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: bindings to the Rust petal-clustering library providing
-    DBSCAN, HDBSCAN, and OPTICS density-based clustering algorithms.
+Description: A small, foundational set of clustering algorithms with Rust
+    backends, presented behind one consistent interface. Currently provides the
+    density-based methods DBSCAN and HDBSCAN via the 'petal-clustering' crate.
+    All algorithms return objects sharing a common class, so printing and
+    plotting behave identically whichever algorithm produced the result.
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -15,7 +18,10 @@ Depends:
     R (>= 4.2)
 Imports:
     cli,
-    rlang
+    grDevices,
+    graphics,
+    rlang,
+    stats
 Suggests:
     testthat (>= 3.0.0),
     vdiffr (>= 1.0.0)

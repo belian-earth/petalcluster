@@ -1,4 +1,4 @@
-"""Benchmark: sklearn clustering for comparison with petalcluster.
+"""Benchmark: sklearn clustering for comparison with shoal.
 
 Run from project root:
   Rscript bench/gen_data.R            # generate shared datasets (once)
@@ -21,7 +21,7 @@ import warnings
 from pathlib import Path
 
 import numpy as np
-from sklearn.cluster import DBSCAN, HDBSCAN, OPTICS
+from sklearn.cluster import DBSCAN, HDBSCAN
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -77,16 +77,6 @@ def bench_sklearn(data_dir: Path, d: int) -> list[tuple]:
         model = HDBSCAN(min_samples=5, min_cluster_size=15)
         t = bench(model.fit_predict, x)
         results.append(("HDBSCAN", f"n={n:,}", n, d, "sklearn", t))
-        print(f"{t:.4f}s")
-
-    # -- OPTICS ----------------------------------------------------------------
-    print("\n=== OPTICS ===")
-    for n in sizes:
-        x = datasets[n]
-        print(f"  n={n:,} ... ", end="", flush=True)
-        model = OPTICS(max_eps=3.0, min_samples=5)
-        t = bench(model.fit_predict, x)
-        results.append(("OPTICS", f"n={n:,}", n, d, "sklearn", t))
         print(f"{t:.4f}s")
 
     return results

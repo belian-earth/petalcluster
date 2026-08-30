@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# petalcluster
+# shoal
 
 <!-- badges: start -->
 
@@ -13,10 +13,11 @@ coverage](https://codecov.io/gh/belian-earth/petalcluster/graph/badge.svg)](http
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-R bindings to the
+A small, foundational set of clustering algorithms with Rust backends,
+presented behind one consistent interface. Currently provides the
+density-based methods **DBSCAN** and **HDBSCAN** via the
 [petal-clustering](https://github.com/petabi/petal-clustering) Rust
-library, providing fast density-based clustering via **DBSCAN**,
-**HDBSCAN**, and **OPTICS**.
+crate.
 
 ## Installation
 
@@ -35,11 +36,11 @@ Real data is rarely that clean. Density-based methods find clusters of
 arbitrary shape and naturally separate noise.
 
 ``` r
-library(petalcluster)
+library(shoal)
 
 # -- Cluster with both methods --
 km  <- kmeans(rings, centers = 3, nstart = 20)
-hdb <- petal_hdbscan(rings, min_cluster_size = 15L, min_samples = 5L)
+hdb <- shoal_hdbscan(rings, min_cluster_size = 15L, min_samples = 5L)
 
 # -- Side-by-side comparison --
 cluster_col <- function(labels) {
@@ -66,7 +67,7 @@ HDBSCAN finds spatial clusters of earthquake activity without needing to
 specify the number of groups upfront.
 
 ``` r
-quakes_hdbscan <- petal_hdbscan(
+quakes_hdbscan <- shoal_hdbscan(
   quakes[, c("lat", "long", "depth", "mag")]
 )
 quakes_hdbscan
@@ -96,7 +97,7 @@ plot(quakes_hdbscan)
 
 ## Performance
 
-petalcluster offers a performant alternative for density-based
+shoal offers a performant alternative for density-based
 clustering in R, particularly at scale. The plot below compares
 wall-clock time against the
 [dbscan](https://cran.r-project.org/package=dbscan) R package and
@@ -115,4 +116,4 @@ alt="Scaling benchmark" />
 The heavy lifting is done by the
 [petal-clustering](https://github.com/petabi/petal-clustering) crate,
 developed and maintained by [Petabi](https://github.com/petabi)
-petalcluster is simply an R interface to their work.
+shoal is simply an R interface to their work.

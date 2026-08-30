@@ -13,13 +13,17 @@
 #'   Names are cluster IDs (as strings), values are integer vectors of 1-indexed
 #'   point indices. `NULL` (default) for fully unsupervised clustering.
 #'
-#' @returns An object of class `"petal_hdbscan"`: a list with components
-#'   `cluster` (integer vector of cluster IDs, `NA` for noise),
-#'   `n_clusters`, `n_noise`, `data` (the input matrix), `params`, `metric`,
-#'   and `outlier_scores` (GLOSH scores).
+#' @returns An object of class `c("shoal_hdbscan", "shoal_clustering")`: a list
+#'   with components `cluster` (integer vector of cluster IDs, `NA` for noise),
+#'   `n_clusters`, `n_noise`, `data` (the input matrix), `algorithm`, `params`,
+#'   `metric`, and `outlier_scores` (GLOSH scores).
+#'
+#' @examples
+#' res <- shoal_hdbscan(as.matrix(iris[, 1:4]))
+#' res
 #'
 #' @export
-petal_hdbscan <- function(x, alpha = 1.0, min_samples = 15L, min_cluster_size = 15L,
+shoal_hdbscan <- function(x, alpha = 1.0, min_samples = 15L, min_cluster_size = 15L,
                           metric = c("euclidean", "cosine"), boruvka = TRUE,
                           partial_labels = NULL) {
   x <- check_numeric_matrix(x)
@@ -43,21 +47,18 @@ petal_hdbscan <- function(x, alpha = 1.0, min_samples = 15L, min_cluster_size = 
     metric, boruvka, partial_labels
   )
 
-  structure(
-    list(
-      cluster = result$cluster,
-      n_clusters = result$n_clusters,
-      n_noise = result$n_noise,
-      data = x,
-      params = list(
-        alpha = alpha,
-        min_samples = as.integer(min_samples),
-        min_cluster_size = as.integer(min_cluster_size),
-        boruvka = boruvka
-      ),
-      metric = metric,
-      outlier_scores = result$outlier_scores
+  new_clustering(
+    cluster = result$cluster,
+    data = x,
+    algorithm = "HDBSCAN",
+    subclass = "shoal_hdbscan",
+    params = list(
+      alpha = alpha,
+      min_samples = as.integer(min_samples),
+      min_cluster_size = as.integer(min_cluster_size),
+      boruvka = boruvka
     ),
-    class = "petal_hdbscan"
+    metric = metric,
+    outlier_scores = result$outlier_scores
   )
 }

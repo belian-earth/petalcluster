@@ -1,28 +1,39 @@
+#' Print a clustering result
+#'
+#' A single method serves every algorithm: the heading, parameters and cluster
+#' counts all come from components the shared constructor guarantees. Algorithms
+#' with extra output specialise and call [NextMethod()].
+#'
+#' @param x A clustering result.
+#' @param ... Ignored.
+#'
+#' @returns `x`, invisibly.
+#'
+#' @name print.shoal
+NULL
+
+#' @rdname print.shoal
 #' @export
-print.petal_dbscan <- function(x, ...) {
-  cli::cli_h3("DBSCAN Clustering")
-  cli::cli_text("Metric: {.val {x$metric}}")
-  cli::cli_text("Parameters: eps = {x$params$eps}, min_samples = {x$params$min_samples}")
+print.shoal_clustering <- function(x, ...) {
+  params <- format_params(x$params)
+
+  cli::cli_h3("{x$algorithm} Clustering")
+  if (!is.null(x$metric)) {
+    cli::cli_text("Metric: {.val {x$metric}}")
+  }
+  cli::cli_text("Parameters: {params}")
   cli::cli_text("Clusters: {x$n_clusters}, Noise points: {x$n_noise}")
   invisible(x)
 }
 
+#' @rdname print.shoal
 #' @export
-print.petal_hdbscan <- function(x, ...) {
-  cli::cli_h3("HDBSCAN Clustering")
-  cli::cli_text("Metric: {.val {x$metric}}")
-  cli::cli_text(
-    "Parameters: alpha = {x$params$alpha}, min_samples = {x$params$min_samples}, min_cluster_size = {x$params$min_cluster_size}"
-  )
-  cli::cli_text("Clusters: {x$n_clusters}, Noise points: {x$n_noise}")
-  invisible(x)
-}
+print.shoal_hdbscan <- function(x, ...) {
+  NextMethod()
 
-#' @export
-print.petal_optics <- function(x, ...) {
-  cli::cli_h3("OPTICS Clustering")
-  cli::cli_text("Metric: {.val {x$metric}}")
-  cli::cli_text("Parameters: eps = {x$params$eps}, min_samples = {x$params$min_samples}")
-  cli::cli_text("Clusters: {x$n_clusters}, Noise points: {x$n_noise}")
+  med <- round(stats::median(x$outlier_scores), 3L)
+  mx <- round(max(x$outlier_scores), 3L)
+  cli::cli_text("GLOSH outlier scores: median {med}, max {mx}")
+
   invisible(x)
 }

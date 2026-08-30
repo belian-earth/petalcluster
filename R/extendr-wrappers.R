@@ -4,17 +4,15 @@
 
 #
 # This file was created with the following call:
-#   .Call("wrap__make_petalcluster_wrappers", use_symbols = TRUE, package_name = "petalcluster")
+#   .Call("wrap__make_shoal_wrappers", use_symbols = TRUE, package_name = "shoal")
 
 #' @usage NULL
-#' @useDynLib petalcluster, .registration = TRUE
+#' @useDynLib shoal, .registration = TRUE
 NULL
 
 rust_dbscan <- function(x, eps, min_samples, metric) .Call(wrap__rust_dbscan, x, eps, min_samples, metric)
 
 rust_hdbscan <- function(x, alpha, min_samples, min_cluster_size, metric, boruvka, partial_labels) .Call(wrap__rust_hdbscan, x, alpha, min_samples, min_cluster_size, metric, boruvka, partial_labels)
-
-rust_optics <- function(x, eps, min_samples, metric) .Call(wrap__rust_optics, x, eps, min_samples, metric)
 
 
 # nolint end

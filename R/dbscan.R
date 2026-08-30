@@ -8,28 +8,30 @@
 #' @param min_samples Minimum number of points to form a dense region. Default `5L`.
 #' @param metric Distance metric, one of `"euclidean"` or `"cosine"`.
 #'
-#' @returns An object of class `"petal_dbscan"`: a list with components
-#'   `cluster` (integer vector of cluster IDs, `NA` for noise),
-#'   `n_clusters`, `n_noise`, `data` (the input matrix), `params`, and `metric`.
+#' @returns An object of class `c("shoal_dbscan", "shoal_clustering")`: a list
+#'   with components `cluster` (integer vector of cluster IDs, `NA` for noise),
+#'   `n_clusters`, `n_noise`, `data` (the input matrix), `algorithm`, `params`,
+#'   and `metric`.
+#'
+#' @examples
+#' res <- shoal_dbscan(as.matrix(iris[, 1:4]), eps = 0.5, min_samples = 5L)
+#' res
 #'
 #' @export
-petal_dbscan <- function(x, eps = 0.5, min_samples = 5L, metric = c("euclidean", "cosine")) {
+shoal_dbscan <- function(x, eps = 0.5, min_samples = 5L, metric = c("euclidean", "cosine")) {
   x <- check_numeric_matrix(x)
   check_positive_number(eps)
   check_positive_integer(min_samples)
   metric <- rlang::arg_match(metric)
 
-  result <- rust_dbscan(x, eps, as.integer(min_samples), metric)
+  cluster <- rust_dbscan(x, eps, as.integer(min_samples), metric)
 
-  structure(
-    list(
-      cluster = result$cluster,
-      n_clusters = result$n_clusters,
-      n_noise = result$n_noise,
-      data = x,
-      params = list(eps = eps, min_samples = as.integer(min_samples)),
-      metric = metric
-    ),
-    class = "petal_dbscan"
+  new_clustering(
+    cluster = cluster,
+    data = x,
+    algorithm = "DBSCAN",
+    subclass = "shoal_dbscan",
+    params = list(eps = eps, min_samples = as.integer(min_samples)),
+    metric = metric
   )
 }
