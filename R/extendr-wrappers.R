@@ -14,5 +14,9 @@ rust_dbscan <- function(x, eps, min_samples, metric) .Call(wrap__rust_dbscan, x,
 
 rust_hdbscan <- function(x, alpha, min_samples, min_cluster_size, metric, boruvka, partial_labels) .Call(wrap__rust_hdbscan, x, alpha, min_samples, min_cluster_size, metric, boruvka, partial_labels)
 
+rust_dist <- function(x, metric, p) .Call(wrap__rust_dist, x, metric, p)
+
+rust_hclust <- function(d, n, method) .Call(wrap__rust_hclust, d, n, method)
+
 
 # nolint end

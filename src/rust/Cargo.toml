@@ -11,9 +11,11 @@ name = 'shoal'
 
 [dependencies]
 extendr-api = '0.8.1'
+kodama = '0.3'
 ndarray = '0.17'
 petal-clustering = '0.13'
 petal-neighbors = '0.18'
+rayon = '1'
 
 [profile.release]
 lto = true

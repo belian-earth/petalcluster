@@ -3,6 +3,8 @@ use petal_clustering::{Dbscan, Fit, HDbscan};
 use petal_neighbors::distance::{Cosine, Euclidean};
 
 mod convert;
+mod dist;
+mod hclust;
 use convert::{assignment_vector, partial_labels_from_list, rmatrix_to_array2};
 
 #[extendr]
@@ -78,8 +80,43 @@ fn rust_hdbscan(
     list!(cluster = assignment, outlier_scores = outlier_scores)
 }
 
+/// Condensed lower-triangle distance matrix, in R's `dist` layout.
+#[extendr]
+fn rust_dist(x: RMatrix<f64>, metric: &str, p: f64) -> Doubles {
+    let data = rmatrix_to_array2(x);
+    let values = dist::condensed(&data, dist::Metric::from_name(metric, p));
+    values.into_iter().map(Rfloat::from).collect()
+}
+
+/// Hierarchical clustering over a condensed dissimilarity matrix.
+///
+/// Returns the `merge`, `height` and `order` components of an `hclust` object.
+/// `d` arrives as an owned copy because kodama destroys the matrix it is given.
+#[extendr]
+fn rust_hclust(d: Vec<f64>, n: i32, method: &str) -> List {
+    let n = n as usize;
+
+    let expected = n * (n - 1) / 2;
+    if d.len() != expected {
+        panic!("expected {expected} dissimilarities for {n} observations, got {}", d.len());
+    }
+    // kodama panics on NaN; the R side rejects these first, so reaching here is a bug.
+    if d.iter().any(|v| v.is_nan()) {
+        panic!("dissimilarity matrix contains NaN");
+    }
+
+    let out = hclust::hclust(d, n, hclust::method_from_name(method));
+    let n_steps = out.height.len();
+
+    let merge = RMatrix::new_matrix(n_steps, 2, |r, c| out.merge[c * n_steps + r]);
+
+    list!(merge = merge, height = out.height, order = out.order)
+}
+
 extendr_module! {
     mod shoal;
     fn rust_dbscan;
     fn rust_hdbscan;
+    fn rust_dist;
+    fn rust_hclust;
 }

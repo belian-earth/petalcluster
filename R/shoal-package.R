@@ -12,13 +12,24 @@
 #'   areas of lower density.
 #' - [shoal_hdbscan()] — HDBSCAN: hierarchical extension of DBSCAN that adapts
 #'   to clusters of varying density.
+#' - [shoal_hclust()] — agglomerative hierarchical clustering with seven linkage
+#'   methods, returning a standard [stats::hclust] object.
+#' - [shoal_dist()] — pairwise distance matrices, returning a standard
+#'   [stats::dist] object.
 #'
-#' Both accept numeric matrices or data frames, support Euclidean and cosine
-#' distance metrics, and return S3 objects with `print()` and `plot()` methods.
+#' The density-based algorithms take numeric matrices or data frames directly.
+#' Hierarchical clustering works from a distance matrix, so it accepts anything
+#' [stats::dist()] would produce as well as raw data.
+#'
+#' Returning R's own `dist` and `hclust` classes rather than bespoke ones is
+#' deliberate: `cutree()`, `as.dendrogram()`, `cmdscale()` and the rest of the
+#' ecosystem then work on the results without any glue.
 #'
 #' The density-based algorithms are bindings to the
 #' \href{https://github.com/petabi/petal-clustering}{petal-clustering} Rust
-#' crate by \href{https://github.com/petabi}{Petabi, Inc.}
+#' crate by \href{https://github.com/petabi}{Petabi, Inc.}; hierarchical
+#' clustering is bound to \href{https://github.com/diffeo/kodama}{kodama}, a
+#' Rust port of \emph{fastcluster}.
 #'
 #' @keywords internal
 #' @aliases shoal-package

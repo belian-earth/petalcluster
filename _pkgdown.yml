@@ -20,10 +20,14 @@ navbar:
       aria-label: GitHub
 reference:
 - title: Clustering
-  desc: Density-based clustering algorithms.
+  desc: Clustering algorithms.
   contents:
   - shoal_dbscan
   - shoal_hdbscan
+  - shoal_hclust
+- title: Distances
+  desc: Pairwise distance matrices.
+  contents: shoal_dist
 - title: Methods
   desc: Shared print and plot methods for clustering results.
   contents:

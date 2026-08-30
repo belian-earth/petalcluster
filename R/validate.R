@@ -19,6 +19,12 @@ check_numeric_matrix <- function(x, call = rlang::caller_env()) {
     cli::cli_abort("{.arg x} must have at least 2 columns.", call = call)
   }
 
+  # extendr expects a double matrix; an integer one (0/1 presence data, say)
+  # would otherwise fail to convert.
+  if (!is.double(x)) {
+    storage.mode(x) <- "double"
+  }
+
   # Drop rows containing NA — NaN poisons distance calculations in Rust
   incomplete <- !stats::complete.cases(x)
   if (any(incomplete)) {
