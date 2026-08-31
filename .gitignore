@@ -11,3 +11,4 @@ src/Makevars.win
 dev.R
 .claude/
 docs
+__pycache__/
