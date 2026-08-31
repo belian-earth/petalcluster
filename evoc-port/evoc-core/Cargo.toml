@@ -1,0 +1,17 @@
+[package]
+name = "evoc-core"
+version = "0.0.1"
+edition = "2021"
+rust-version = "1.81"
+publish = false
+description = "Dependency-free Rust port of the EVoC clustering pipeline, validated against fixtures generated from the Python reference (TutteInstitute/evoc 0.3.1)."
+license = "Apache-2.0 AND BSD-2-Clause"
+
+# Deliberately no runtime dependencies: everything here is graphs, heaps and
+# elementary maths, and staying std-only is what lets the eventual shoal
+# integration ship inside CRAN's size budget. It also keeps this crate testable
+# without libR, unlike the extendr-linked shoal crate.
+[dependencies]
+
+[dev-dependencies]
+serde_json = "1"
