@@ -23,7 +23,8 @@
 #'
 #' @param x A numeric matrix or data frame. Data frames are coerced to a matrix
 #'   using their numeric columns (non-numeric columns are dropped).
-#' @param k Number of clusters. Must be at least 1 and no more than `nrow(x)`.
+#' @param k Number of clusters. Required — there is no sensible default for
+#'   the central modelling decision. Must be at least 1 and no more than `nrow(x)`.
 #' @param init Initialisation method. `"kmeans++"` (default) is the usual
 #'   choice; `"kmeans_parallel"` scales better past roughly 100 clusters;
 #'   `"random"` is the naive baseline.
@@ -31,7 +32,8 @@
 #'   Default `10L`.
 #' @param max_iter Maximum iterations per run. Default `300L`.
 #' @param tolerance Convergence threshold on centroid movement. Default `1e-4`.
-#' @param seed Integer seed for initialisation. Default `1L`.
+#' @param seed Non-negative whole-number seed for initialisation. Stored and
+#'   passed as a double, so values beyond the integer range are safe. Default `1L`.
 #'
 #' @returns An object of class `c("shoal_kmeans", "shoal_clustering")`: a list
 #'   with components `cluster` (integer vector of cluster IDs), `n_clusters`,
@@ -46,10 +48,11 @@
 #' fit$centroids
 #'
 #' @export
-shoal_kmeans <- function(x, k = 2L,
+shoal_kmeans <- function(x, k,
                          init = c("kmeans++", "kmeans_parallel", "random"),
                          n_runs = 10L, max_iter = 300L, tolerance = 1e-4,
                          seed = 1L) {
+  rlang::check_required(k)
   x <- check_numeric_matrix(x)
   check_positive_integer(k)
   init <- rlang::arg_match(init)
@@ -78,7 +81,8 @@ shoal_kmeans <- function(x, k = 2L,
       k = as.integer(k),
       init = init,
       n_runs = as.integer(n_runs),
-      seed = as.integer(seed)
+      # Kept as double: a whole-number seed can exceed the integer range.
+      seed = as.numeric(seed)
     ),
     centroids = result$centroids,
     inertia = result$inertia,
@@ -114,12 +118,7 @@ predict.shoal_kmeans <- function(object, newdata = NULL, ...) {
   }
 
   newdata <- check_numeric_matrix(newdata, na_action = "error")
-
-  if (ncol(newdata) != ncol(object$centroids)) {
-    cli::cli_abort(
-      "{.arg newdata} has {ncol(newdata)} column{?s}, but the model was fitted on {ncol(object$centroids)}."
-    )
-  }
+  check_newdata_columns(newdata, object$centroids)
 
   rust_nearest_centroid(newdata, object$centroids)
 }

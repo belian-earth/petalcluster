@@ -71,8 +71,13 @@ impl Metric {
                     let diff = (x - y).abs();
                     if sum > f64::MIN_POSITIVE || diff > f64::MIN_POSITIVE {
                         let dev = diff / sum;
-                        if !dev.is_nan() || (!diff.is_finite() && diff == sum) {
+                        if !dev.is_nan() {
                             dist += dev;
+                            count += 1;
+                        } else if !diff.is_finite() && diff == sum {
+                            // R's limit convention: Inf/Inf counts as 1
+                            // (the `(dev = 1., TRUE)` reassignment in R_canberra).
+                            dist += 1.0;
                             count += 1;
                         }
                     }

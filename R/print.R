@@ -44,8 +44,9 @@ print.shoal_kmeans <- function(x, ...) {
   NextMethod()
 
   inertia <- signif(x$inertia, 5L)
+  sizes <- paste(x$sizes, collapse = ", ")
   cli::cli_text("Within-cluster sum of squares: {inertia}")
-  cli::cli_text("Cluster sizes: {x$sizes}")
+  cli::cli_text("Cluster sizes: {sizes}")
 
   invisible(x)
 }
@@ -57,8 +58,9 @@ print.shoal_gmm <- function(x, ...) {
 
   loglik <- signif(x$loglik, 6L)
   bic <- signif(stats::BIC(x), 6L)
+  weights <- paste(signif(x$weights, 3L), collapse = ", ")
   cli::cli_text("Log-likelihood: {loglik}, BIC: {bic}")
-  cli::cli_text("Mixing proportions: {signif(x$weights, 3L)}")
+  cli::cli_text("Mixing proportions: {weights}")
 
   invisible(x)
 }

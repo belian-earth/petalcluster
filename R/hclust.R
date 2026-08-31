@@ -47,6 +47,12 @@ shoal_hclust <- function(d,
   method <- rlang::arg_match(method)
 
   if (!inherits(d, "dist")) {
+    if (looks_like_dist_matrix(d)) {
+      cli::cli_abort(c(
+        "{.arg d} looks like a square distance matrix, not raw data.",
+        "i" = "Pass {.code as.dist(d)} to use it as distances."
+      ))
+    }
     d <- shoal_dist(d)
   }
 

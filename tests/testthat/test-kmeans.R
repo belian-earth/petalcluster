@@ -108,7 +108,8 @@ test_that("shoal_kmeans validates its inputs", {
   expect_error(shoal_kmeans(x, k = 2L, n_runs = 0L), "positive integer")
   expect_error(shoal_kmeans(x, k = 2L, tolerance = -1), "positive")
   expect_error(shoal_kmeans(x, k = 2L, seed = -1L), "non-negative")
-  expect_error(shoal_kmeans(1:10), "numeric matrix or data frame")
+  expect_error(shoal_kmeans(1:10, k = 2L), "numeric matrix or data frame")
+  expect_error(shoal_kmeans(x), "absent")
 })
 
 test_that("predict assigns new observations to the nearest centroid", {

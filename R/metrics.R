@@ -32,6 +32,12 @@ shoal_silhouette <- function(d, cluster) {
   cluster <- as_cluster_vector(cluster)
 
   if (!inherits(d, "dist")) {
+    if (looks_like_dist_matrix(d)) {
+      cli::cli_abort(c(
+        "{.arg d} looks like a square distance matrix, not raw data.",
+        "i" = "Pass {.code as.dist(d)} to use it as distances."
+      ))
+    }
     d <- shoal_dist(d)
   }
   n <- attr(d, "Size")
@@ -49,7 +55,7 @@ shoal_silhouette <- function(d, cluster) {
     cli::cli_abort("{.arg cluster} contains no clustered observations.")
   }
   if (!all(keep)) {
-    d <- stats::as.dist(as.matrix(d)[keep, keep, drop = FALSE])
+    d <- subset_dist(d, keep)
     cluster <- cluster[keep]
     n <- sum(keep)
   }

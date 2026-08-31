@@ -26,14 +26,19 @@
 #'
 #' @param x A numeric matrix or data frame. Data frames are coerced to a matrix
 #'   using their numeric columns (non-numeric columns are dropped).
-#' @param k Number of mixture components. Default `2L`.
+#' @param k Number of mixture components. Required — there is no sensible
+#'   default for the central modelling decision.
 #' @param init Initialisation method: `"kmeans"` (default) or `"random"`.
-#' @param n_runs Number of restarts, keeping the best fit. Default `1L`.
+#' @param n_runs Number of restarts, keeping the best fit. Default `1L`:
+#'   unlike [shoal_kmeans()]'s 10, a single run is the norm for EM (sklearn does
+#'   the same) because the k-means initialisation already starts close and each
+#'   run is expensive. Raise it for small, multimodal problems.
 #' @param max_iter Maximum EM iterations per run. Default `100L`.
 #' @param tolerance Convergence threshold on the log-likelihood. Default `1e-3`.
 #' @param reg_covariance Value added to the diagonal of each covariance matrix
 #'   to keep it positive definite. Default `1e-6`.
-#' @param seed Integer seed for initialisation. Default `1L`.
+#' @param seed Non-negative whole-number seed for initialisation. Stored and
+#'   passed as a double, so values beyond the integer range are safe. Default `1L`.
 #'
 #' @returns An object of class `c("shoal_gmm", "shoal_clustering")`: a list with
 #'   components `cluster`, `n_clusters`, `n_noise` (always `0`), `data`,
@@ -49,9 +54,10 @@
 #' head(fit$posterior)
 #'
 #' @export
-shoal_gmm <- function(x, k = 2L, init = c("kmeans", "random"),
+shoal_gmm <- function(x, k, init = c("kmeans", "random"),
                       n_runs = 1L, max_iter = 100L, tolerance = 1e-3,
                       reg_covariance = 1e-6, seed = 1L) {
+  rlang::check_required(k)
   x <- check_numeric_matrix(x)
   check_positive_integer(k)
   init <- rlang::arg_match(init)
@@ -85,7 +91,8 @@ shoal_gmm <- function(x, k = 2L, init = c("kmeans", "random"),
       k = as.integer(k),
       init = init,
       n_runs = as.integer(n_runs),
-      seed = as.integer(seed)
+      # Kept as double: a whole-number seed can exceed the integer range.
+      seed = as.numeric(seed)
     ),
     posterior = dens$posterior,
     weights = result$weights,
@@ -173,12 +180,7 @@ predict.shoal_gmm <- function(object, newdata = NULL, type = c("class", "posteri
   }
 
   newdata <- check_numeric_matrix(newdata, na_action = "error")
-
-  if (ncol(newdata) != ncol(object$means)) {
-    cli::cli_abort(
-      "{.arg newdata} has {ncol(newdata)} column{?s}, but the model was fitted on {ncol(object$means)}."
-    )
-  }
+  check_newdata_columns(newdata, object$means)
 
   dens <- gmm_log_density(newdata, object$weights, object$means, object$covariances)
 

@@ -12,7 +12,7 @@
 #'
 #' @param x A numeric matrix or data frame. Data frames are coerced to a matrix
 #'   using their numeric columns (non-numeric columns are dropped). Rows
-#'   containing missing values are removed.
+#'   containing missing or non-finite values are removed.
 #' @param metric Distance metric. One of `"euclidean"`, `"maximum"`,
 #'   `"manhattan"`, `"canberra"`, `"binary"`, `"minkowski"`, `"cosine"` or
 #'   `"correlation"`.
@@ -86,4 +86,60 @@ new_dist <- function(v, n, labels = NULL, method = "euclidean", call = NULL) {
     call = call,
     class = "dist"
   )
+}
+
+#' Subset a `dist` object to a set of kept observations
+#'
+#' Works directly on the condensed vector via R's own indexing formula, so it
+#' never materialises the full `n x n` matrix — which matters at exactly the
+#' sizes where distance matrices are already straining memory.
+#'
+#' @param d A `dist` object.
+#' @param keep Logical vector, one entry per observation.
+#'
+#' @noRd
+subset_dist <- function(d, keep) {
+  n <- attr(d, "Size")
+  pos <- which(keep)
+  m <- length(pos)
+
+  if (m < 2L) {
+    return(new_dist(double(0L), n = m,
+                    labels = attr(d, "Labels")[keep],
+                    method = attr(d, "method")))
+  }
+
+  # Every kept pair (a < b), enumerated in dist's column-major order.
+  a <- rep(seq_len(m - 1L), times = (m - 1L):1L)
+  b <- sequence((m - 1L):1L) + a
+  i <- pos[a]
+  j <- pos[b]
+
+  # R's condensed index for the pair (i < j) among n observations.
+  old_index <- n * (i - 1) - i * (i - 1) / 2 + j - i
+
+  new_dist(
+    as.double(d)[old_index],
+    n = m,
+    labels = attr(d, "Labels")[keep],
+    method = attr(d, "method")
+  )
+}
+
+#' Does a matrix look like a square distance matrix rather than data?
+#'
+#' Symmetric, zero diagonal, non-negative: essentially nothing but a distance
+#' matrix satisfies all three, and treating one as raw data would silently
+#' compute distances between rows of distances.
+#'
+#' @noRd
+looks_like_dist_matrix <- function(x) {
+  is.matrix(x) &&
+    is.numeric(x) &&
+    nrow(x) == ncol(x) &&
+    nrow(x) > 2L &&
+    !anyNA(x) &&
+    all(x >= 0) &&
+    all(diag(x) == 0) &&
+    isSymmetric(unname(x))
 }

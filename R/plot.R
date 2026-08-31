@@ -51,36 +51,28 @@ cluster_aesthetics <- function(cluster, n_clusters, pal) {
 
 #' Resolve a column reference (name or index) to an integer index
 #' @noRd
-resolve_col <- function(col, data, arg) {
+resolve_col <- function(col, data, arg, call) {
   if (is.character(col)) {
     idx <- match(col, colnames(data))
     if (is.na(idx)) {
-      cli::cli_abort(
-        "Column {.val {col}} not found in data.",
-        call = rlang::caller_env(2)
-      )
+      cli::cli_abort("Column {.val {col}} not found in data.", call = call)
     }
     idx
   } else if (is.numeric(col)) {
     col <- as.integer(col)
     if (col < 1L || col > ncol(data)) {
-      cli::cli_abort(
-        "{.arg {arg}} must be between 1 and {ncol(data)}.",
-        call = rlang::caller_env(2)
-      )
+      cli::cli_abort("{.arg {arg}} must be between 1 and {ncol(data)}.", call = call)
     }
     col
   } else {
-    cli::cli_abort(
-      "{.arg {arg}} must be a column name or index.",
-      call = rlang::caller_env(2)
-    )
+    cli::cli_abort("{.arg {arg}} must be a column name or index.", call = call)
   }
 }
 
 #' Shared plotting logic
 #' @noRd
-plot_clusters <- function(obj, title, xcol = NULL, ycol = NULL, pal, ...) {
+plot_clusters <- function(obj, title, xcol = NULL, ycol = NULL, pal, ...,
+                          call = rlang::caller_env()) {
   data <- obj$data
   cluster <- obj$cluster
   aes <- cluster_aesthetics(cluster, obj$n_clusters, pal)
@@ -101,11 +93,12 @@ plot_clusters <- function(obj, title, xcol = NULL, ycol = NULL, pal, ...) {
   if (!is.null(xcol) || !is.null(ycol)) {
     if (is.null(xcol) || is.null(ycol)) {
       cli::cli_abort(
-        "Both {.arg xcol} and {.arg ycol} must be supplied together."
+        "Both {.arg xcol} and {.arg ycol} must be supplied together.",
+        call = call
       )
     }
-    xi <- resolve_col(xcol, data, "xcol")
-    yi <- resolve_col(ycol, data, "ycol")
+    xi <- resolve_col(xcol, data, "xcol", call = call)
+    yi <- resolve_col(ycol, data, "ycol", call = call)
     plot(
       data[, xi],
       data[, yi],
