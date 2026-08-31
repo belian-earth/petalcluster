@@ -33,8 +33,9 @@ fn core_rdistances(data: &[Vec<f32>], min_samples: usize) -> Vec<f32> {
     data.iter()
         .map(|p| {
             let mut dists: Vec<f32> = data.iter().map(|q| rdist(p, q)).collect();
-            dists.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            dists[min_samples.min(n - 1)]
+            let k = min_samples.min(n - 1);
+            let (_, kth, _) = dists.select_nth_unstable_by(k, |a, b| a.partial_cmp(b).unwrap());
+            *kth
         })
         .collect()
 }

@@ -34,6 +34,28 @@ six seam groups are green against reference v0.3.1. Still to port: NN-Descent,
 label-propagation init and the SGD node embedding (the stochastic half), plus
 a scalable dual-tree MST.
 
+## Measured against the reference (identical input bytes, warm numba, 4 threads)
+
+Best-of-3 (best-of-2 at n = 30k) on 4-d embeddings with 12 clusters + noise;
+"chain" is linkage → condense → extraction → persistence → layers from a shared
+MST, i.e. the algorithmically identical part.
+
+| Stage                | n      | evoc-core | Python ref | Note                              |
+|----------------------|--------|-----------|------------|-----------------------------------|
+| MST                  | 2,000  | 0.039 s   | 0.014 s    | brute Prim vs kd-tree Borůvka     |
+| MST                  | 10,000 | 1.03 s    | 0.085 s    | the O(n²) placeholder, ×12 behind |
+| MST                  | 30,000 | 10.14 s   | 0.33 s     | ×30 behind and growing            |
+| chain                | 30,000 | 0.0115 s  | 0.0119 s   | parity                            |
+| fuzzy graph          | 30,000 | 0.117 s   | 0.124 s    | serial Rust ≈ 4-thread numba      |
+| cold start (n = 2k)  | —      | ~0 s      | ~3.3 s     | import + JIT, numba cache warm    |
+
+Three conclusions. The deterministic chain is at parity — compiled loops are
+compiled loops, and Rust's win there is determinism, zero JIT and zero
+dependencies, not throughput. The serial fuzzy graph already matches the
+reference's 4-thread kernels, so rayon would put it clearly ahead. And the MST
+placeholder is the entire performance gap: a dual-tree Borůvka is the one
+remaining piece of real algorithmic work, now with a number attached.
+
 ## The contract a port must meet
 
 - **S1–S2, S5–S8**: bitwise (f64 round-trip) equality with the stored outputs.
