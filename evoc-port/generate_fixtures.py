@@ -403,14 +403,21 @@ def fixture_end_to_end(name, data, truth):
     # defensible contract is that a port must produce SOME layer as good as the
     # reference's best layer, and an R API should expose every layer rather
     # than hiding the choice.
+    # Bounds come from a 10-seed sweep of the reference. The per-seed floor
+    # (`min_ari_bound`) tolerates the reference's own tail draws — its seed
+    # distribution on this input dips well below its typical score — while the
+    # mean bound (`mean_ari_bound`) is what actually catches a systematically
+    # weaker port: a port whose average over several seeds sits more than the
+    # margin below the reference's average fails even if every seed clears the
+    # floor.
+    seeds = (42, 43, 44, 1, 2, 3, 4, 5, 6, 7)
     per_seed_layers, aris = [], []
-    for seed in (42, 43, 44):
+    for seed in seeds:
         model = evoc.EVoC(base_min_cluster_size=15, random_state=seed)
         model.fit_predict(data)
         layers = [np.asarray(l) for l in model.cluster_layers_]
         per_seed_layers.append(layers)
         aris.append(max(ari(truth, l) for l in layers))
-    spread = max(aris) - min(aris)
     if min(aris) < 0.7:
         raise RuntimeError(
             f"{name}: reference ARI {aris} too weak/unstable to bound a port; "
@@ -428,18 +435,22 @@ def fixture_end_to_end(name, data, truth):
             "truth": arr(truth),
             "scoring": "max ARI over returned layers, per seed",
             "layers_seed42": [arr(l) for l in per_seed_layers[0]],
+            "seeds": list(seeds),
             "ari_per_seed": aris,
-            "seed_spread": spread,
-            "min_ari_bound": round(min(aris) - max(0.02, 2 * spread), 4),
+            "min_ari_bound": round(min(aris) - 0.02, 4),
+            "mean_ari_bound": round(float(np.mean(aris)) - 0.04, 4),
         },
     })
 
 
 def main():
+    only_e2e = "--only-e2e" in sys.argv
     OUT.mkdir(exist_ok=True)
     cases = make_cases()
 
     for name, (data, truth) in cases.items():
+        if only_e2e:
+            break
         print(f"case: {name} (n={data.shape[0]}, d={data.shape[1]})")
         fixture_graph_seams(name, data)
         # Low-dimensional inputs stand in for the node embedding directly; for

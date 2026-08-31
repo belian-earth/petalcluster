@@ -112,7 +112,7 @@ fn coo_to_csr(n: usize, rows: &[u32], cols: &[u32], vals: &[f32]) -> Csr {
     Csr { indptr, indices, data, n }
 }
 
-fn transpose(m: &Csr) -> Csr {
+pub(crate) fn transpose(m: &Csr) -> Csr {
     let mut rows = Vec::with_capacity(m.data.len());
     let mut cols = Vec::with_capacity(m.data.len());
     let mut vals = Vec::with_capacity(m.data.len());

@@ -17,9 +17,14 @@
 
 pub mod condense;
 pub mod disjoint_set;
+pub mod embedding;
 pub mod graph;
 pub mod kdtree;
+pub mod labelprop;
 pub mod layers;
 pub mod linkage;
 pub mod mst;
+pub mod nndescent;
 pub mod persistence;
+pub mod pipeline;
+pub mod rng;
