@@ -38,6 +38,13 @@ name = "evoc-core"
 version = "0.0.1"
 dependencies = [
  "rayon",
+]
+
+[[package]]
+name = "evoc-parity"
+version = "0.0.1"
+dependencies = [
+ "evoc-core",
  "serde_json",
 ]
 

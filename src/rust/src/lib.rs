@@ -4,6 +4,7 @@ use petal_neighbors::distance::{Cosine, Euclidean};
 
 mod convert;
 mod dist;
+mod evoc;
 mod gmm;
 mod hclust;
 mod kmeans;
@@ -215,6 +216,43 @@ fn rust_gmm(
     ))
 }
 
+/// EVoC: direct multi-layer clustering of embedding vectors.
+///
+/// Returns every cluster layer (finest first) with membership strengths and
+/// persistence scores, plus the learned node embedding; which layer to surface
+/// as `cluster` is the R side's decision. `dim = 0` means the reference
+/// default `min(max(n_neighbors / 4, 4), 15)`.
+#[extendr]
+fn rust_evoc(
+    x: RMatrix<f64>,
+    n_neighbors: i32,
+    noise_level: f64,
+    min_cluster_size: i32,
+    min_samples: i32,
+    n_epochs: i32,
+    dim: i32,
+    min_similarity_threshold: f64,
+    max_layers: i32,
+    n_label_prop_iter: i32,
+    seed: f64,
+) -> List {
+    let n = x.nrows();
+    let result = evoc::run(
+        x,
+        n_neighbors as usize,
+        noise_level,
+        i64::from(min_cluster_size),
+        min_samples as usize,
+        n_epochs as usize,
+        if dim > 0 { Some(dim as usize) } else { None },
+        min_similarity_threshold,
+        max_layers as usize,
+        n_label_prop_iter as usize,
+        seed as u64,
+    );
+    evoc::result_to_list(&result, n)
+}
+
 /// Per-observation silhouette widths from a condensed distance matrix.
 ///
 /// `cluster` arrives 1-indexed from R and is returned to R the same way.
@@ -274,6 +312,7 @@ extendr_module! {
     fn rust_kmeans;
     fn rust_nearest_centroid;
     fn rust_gmm;
+    fn rust_evoc;
     fn rust_silhouette;
     fn rust_cluster_indices;
 }

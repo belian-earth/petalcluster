@@ -16,6 +16,8 @@
 #'   areas of lower density.
 #' - [shoal_hdbscan()] — HDBSCAN: hierarchical extension of DBSCAN that adapts
 #'   to clusters of varying density.
+#' - [shoal_evoc()] — EVoC: direct multi-granularity clustering of embedding
+#'   vectors, returning every cluster layer rather than one flat partition.
 #' - [shoal_hclust()] — agglomerative hierarchical clustering with seven linkage
 #'   methods, returning a standard [stats::hclust] object.
 #' - [shoal_dist()] — pairwise distance matrices, returning a standard
@@ -36,8 +38,11 @@
 #' \href{https://github.com/petabi/petal-clustering}{petal-clustering} Rust
 #' crate by \href{https://github.com/petabi}{Petabi, Inc.}; hierarchical
 #' clustering is bound to \href{https://github.com/diffeo/kodama}{kodama}, a
-#' Rust port of \emph{fastcluster}; and k-means and Gaussian mixtures to
-#' \href{https://github.com/rust-ml/linfa}{linfa}.
+#' Rust port of \emph{fastcluster}; k-means and Gaussian mixtures to
+#' \href{https://github.com/rust-ml/linfa}{linfa}; and EVoC to an in-tree
+#' Rust port of the
+#' \href{https://github.com/TutteInstitute/evoc}{reference implementation},
+#' validated against fixtures generated from it.
 #'
 #' @keywords internal
 #' @aliases shoal-package

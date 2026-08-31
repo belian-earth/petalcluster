@@ -40,6 +40,26 @@ print.shoal_hdbscan <- function(x, ...) {
 
 #' @rdname print.shoal
 #' @export
+print.shoal_evoc <- function(x, ...) {
+  NextMethod()
+
+  cli::cli_text("Layers (finest first, {cli::symbol$star} = selected):")
+  for (i in seq_along(x$layers)) {
+    l <- x$layers[[i]]
+    k <- length(unique(l[!is.na(l)]))
+    noise <- sum(is.na(l))
+    persistence <- signif(x$persistence[[i]], 4L)
+    marker <- if (i == x$layer) cli::symbol$star else " "
+    cli::cli_text(
+      "{marker} {i}: {k} cluster{?s}, {noise} noise, persistence {persistence}"
+    )
+  }
+
+  invisible(x)
+}
+
+#' @rdname print.shoal
+#' @export
 print.shoal_kmeans <- function(x, ...) {
   NextMethod()
 

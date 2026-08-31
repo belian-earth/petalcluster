@@ -1,0 +1,16 @@
+[package]
+name = "evoc-core"
+version = "0.0.1"
+edition = "2021"
+rust-version = "1.81"
+publish = false
+description = "Rust port of the EVoC clustering pipeline, validated against fixtures generated from the Python reference (TutteInstitute/evoc 0.3.1). Parity tests live in evoc-port/parity."
+license = "Apache-2.0 AND BSD-2-Clause"
+
+# rayon is the sole dependency, and shoal's tree already vendors it, so this
+# crate adds nothing to the CRAN size budget. Staying otherwise std-only keeps
+# it testable without libR, unlike the extendr-linked shoal crate. The parity
+# tests and their serde_json dev-dependency live in evoc-port/parity so the
+# shipped package never resolves them.
+[dependencies]
+rayon = "1"

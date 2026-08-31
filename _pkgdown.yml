@@ -26,6 +26,7 @@ reference:
   - shoal_gmm
   - shoal_dbscan
   - shoal_hdbscan
+  - shoal_evoc
   - shoal_hclust
 - title: Distances
   desc: Pairwise distance matrices.

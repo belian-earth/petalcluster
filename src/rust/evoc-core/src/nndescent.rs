@@ -194,7 +194,7 @@ pub fn nn_descent(data: &[f32], dims: usize, k: usize, seed: u64) -> KnnGraph {
                 let news = &new_cand[i];
                 let olds = &old_cand[i];
                 let mut out = Vec::new();
-                let mut propose = |a: i32, d: f32, b: i32, out: &mut Vec<(u32, f32, i32)>| {
+                let propose = |a: i32, d: f32, b: i32, out: &mut Vec<(u32, f32, i32)>| {
                     if d < worst_at_start[a as usize] {
                         out.push((a as u32, d, b));
                     }

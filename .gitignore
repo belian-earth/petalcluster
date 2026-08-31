@@ -12,3 +12,5 @@ dev.R
 .claude/
 docs
 __pycache__/
+evoc-port/parity/target
+src/rust/evoc-core/target

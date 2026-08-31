@@ -4,10 +4,13 @@ Version: 0.0.0.1
 Authors@R:
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
 Description: A small, foundational set of clustering algorithms with Rust
-    backends, presented behind one consistent interface. Currently provides the
-    density-based methods DBSCAN and HDBSCAN via the 'petal-clustering' crate.
-    All algorithms return objects sharing a common class, so printing and
-    plotting behave identically whichever algorithm produced the result.
+    backends, presented behind one consistent interface: k-means and Gaussian
+    mixtures via 'linfa', the density-based methods DBSCAN and HDBSCAN via
+    'petal-clustering', agglomerative hierarchical clustering via 'kodama',
+    and EVoC, direct multi-granularity clustering of embedding vectors, via
+    an in-tree port of the reference implementation. All algorithms return
+    objects sharing a common class, so printing and plotting behave
+    identically whichever algorithm produced the result.
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

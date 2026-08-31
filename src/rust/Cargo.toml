@@ -20,6 +20,8 @@ ndarray = '0.17'
 ndarray_linfa = { package = 'ndarray', version = '0.16' }
 petal-clustering = '0.13'
 petal-neighbors = '0.18'
+# The EVoC port lives in-tree; its only dependency is rayon, below.
+evoc-core = { path = 'evoc-core' }
 rand_xoshiro = '0.6'
 rayon = '1'
 

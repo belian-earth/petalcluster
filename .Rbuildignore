@@ -18,3 +18,4 @@
 ^docs$
 ^pkgdown$
 ^evoc-port$
+^src/rust/evoc-core/target$

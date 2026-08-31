@@ -23,9 +23,13 @@ knitr::opts_chunk$set(
 <!-- badges: end -->
 
 A small, foundational set of clustering algorithms with Rust backends, presented
-behind one consistent interface. Currently provides the density-based methods
-**DBSCAN** and **HDBSCAN** via the
-[petal-clustering](https://github.com/petabi/petal-clustering) Rust crate.
+behind one consistent interface: **k-means** and **Gaussian mixtures** via
+[linfa](https://github.com/rust-ml/linfa), the density-based methods **DBSCAN**
+and **HDBSCAN** via
+[petal-clustering](https://github.com/petabi/petal-clustering), agglomerative
+**hierarchical clustering** via [kodama](https://github.com/diffeo/kodama), and
+**EVoC** — McInnes's direct multi-layer clustering of embedding vectors — via an
+in-tree Rust port validated against the Python reference.
 
 ## Installation
 
