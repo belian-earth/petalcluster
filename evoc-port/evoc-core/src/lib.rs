@@ -18,6 +18,7 @@
 pub mod condense;
 pub mod disjoint_set;
 pub mod graph;
+pub mod kdtree;
 pub mod layers;
 pub mod linkage;
 pub mod mst;

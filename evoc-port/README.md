@@ -28,7 +28,7 @@ L2-normalised embedding-like input — EVoC's stated domain.
 
 `evoc-core/` is a std-only Rust crate (zero runtime dependencies, serde_json
 for tests only) containing the deterministic clustering half of the pipeline:
-S1–S2 (fuzzy graph), S4 (mutual-reachability MST, brute-force Prim for now),
+S1–S2 (fuzzy graph), S4 (mutual-reachability MST via kd-tree Borůvka, with a Prim oracle),
 S5–S8 and the full S3 chain. `cargo test` inside it runs every fixture; all
 six seam groups are green against reference v0.3.1. Still to port: NN-Descent,
 label-propagation init and the SGD node embedding (the stochastic half), plus
@@ -38,23 +38,30 @@ a scalable dual-tree MST.
 
 Best-of-3 (best-of-2 at n = 30k) on 4-d embeddings with 12 clusters + noise;
 "chain" is linkage → condense → extraction → persistence → layers from a shared
-MST, i.e. the algorithmically identical part.
+MST. Both columns from the same container in the same session.
 
-| Stage                | n      | evoc-core | Python ref | Note                              |
-|----------------------|--------|-----------|------------|-----------------------------------|
-| MST                  | 2,000  | 0.039 s   | 0.014 s    | brute Prim vs kd-tree Borůvka     |
-| MST                  | 10,000 | 1.03 s    | 0.085 s    | the O(n²) placeholder, ×12 behind |
-| MST                  | 30,000 | 10.14 s   | 0.33 s     | ×30 behind and growing            |
-| chain                | 30,000 | 0.0115 s  | 0.0119 s   | parity                            |
-| fuzzy graph          | 30,000 | 0.117 s   | 0.124 s    | serial Rust ≈ 4-thread numba      |
-| cold start (n = 2k)  | —      | ~0 s      | ~3.3 s     | import + JIT, numba cache warm    |
+| Stage               | n      | evoc-core | Python ref | Ratio        |
+|---------------------|--------|-----------|------------|--------------|
+| MST                 | 2,000  | 0.007 s   | 0.011 s    | 1.6× ahead   |
+| MST                 | 10,000 | 0.048 s   | 0.093 s    | 1.9× ahead   |
+| MST                 | 30,000 | 0.180 s   | 0.355 s    | 2.0× ahead   |
+| full deterministic  | 30,000 | 0.194 s   | 0.370 s    | 1.9× ahead   |
+| chain only          | 30,000 | 0.010 s   | 0.012 s    | parity       |
+| fuzzy graph         | 30,000 | 0.112 s   | 0.106 s    | parity       |
+| cold start (n = 2k) | —      | ~0 s      | ~3.3 s     | import + JIT |
 
-Three conclusions. The deterministic chain is at parity — compiled loops are
-compiled loops, and Rust's win there is determinism, zero JIT and zero
-dependencies, not throughput. The serial fuzzy graph already matches the
-reference's 4-thread kernels, so rayon would put it clearly ahead. And the MST
-placeholder is the entire performance gap: a dual-tree Borůvka is the one
-remaining piece of real algorithmic work, now with a number attached.
+The MST is a kd-tree Borůvka with the reference's structure — tree-queried
+core distances, the kNN initialisation pass, component-aware queries with
+per-component pruning bounds — parallelised with rayon for the per-point work
+but reduced deterministically in index order, so unlike the reference (which
+races on its pruning bound) the output is bitwise reproducible across runs and
+thread counts. Correctness is held by the six MST fixtures plus property tests
+against a brute-force Prim oracle over varied shapes, dimensions, min_samples
+values, duplicates and tiny inputs.
+
+Remaining performance headroom, should it ever matter: the fuzzy graph is
+still serial (parity with 4-thread numba as-is), and the chain has never
+needed optimising.
 
 ## The contract a port must meet
 

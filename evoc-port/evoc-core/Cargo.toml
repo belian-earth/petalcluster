@@ -7,11 +7,12 @@ publish = false
 description = "Dependency-free Rust port of the EVoC clustering pipeline, validated against fixtures generated from the Python reference (TutteInstitute/evoc 0.3.1)."
 license = "Apache-2.0 AND BSD-2-Clause"
 
-# Deliberately no runtime dependencies: everything here is graphs, heaps and
-# elementary maths, and staying std-only is what lets the eventual shoal
-# integration ship inside CRAN's size budget. It also keeps this crate testable
-# without libR, unlike the extendr-linked shoal crate.
+# rayon is the sole runtime dependency, and it is already vendored in shoal's
+# tree, so the eventual integration adds nothing to the CRAN size budget.
+# Staying otherwise std-only keeps this crate testable without libR, unlike
+# the extendr-linked shoal crate.
 [dependencies]
+rayon = "1"
 
 [dev-dependencies]
 serde_json = "1"
