@@ -82,7 +82,7 @@ pub fn cluster_layers_from_mst(
             &barcode.births,
             &barcode.deaths,
             params.min_similarity_threshold,
-            params.max_layers - 1, // one slot reserved for the base layer
+            params.max_layers.saturating_sub(1), // one slot reserved for the base layer
         );
 
         for peak in selected {

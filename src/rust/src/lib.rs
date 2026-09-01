@@ -1,4 +1,5 @@
 use extendr_api::prelude::*;
+use extendr_api::unwrap_or_throw_error;
 use petal_clustering::{Dbscan, Fit, HDbscan};
 use petal_neighbors::distance::{Cosine, Euclidean};
 
@@ -131,19 +132,23 @@ fn rust_kmeans(
     max_iter: i32,
     tolerance: f64,
     seed: f64,
-) -> Result<List> {
+) -> List {
     let data = rmatrix_to_array2_linfa(x);
 
-    let fit = kmeans::fit(
-        data,
-        k as usize,
-        kmeans::init_from_name(init),
-        n_runs as usize,
-        max_iter as u64,
-        tolerance,
-        seed as u64,
-    )
-    .map_err(|e| Error::Other(format!("k-means failed: {e}")))?;
+    // extendr 0.8 turns an `Err` return into an opaque "User function
+    // panicked", so errors are raised explicitly here to keep their message.
+    let fit = unwrap_or_throw_error(
+        kmeans::fit(
+            data,
+            k as usize,
+            kmeans::init_from_name(init),
+            n_runs as usize,
+            max_iter as u64,
+            tolerance,
+            seed as u64,
+        )
+        .map_err(|e| Error::Other(format!("k-means failed: {e}"))),
+    );
 
     let n_clusters = fit.centroids.nrows();
     let n_features = fit.centroids.ncols();
@@ -156,12 +161,12 @@ fn rust_kmeans(
 
     let centroids = RMatrix::new_matrix(n_clusters, n_features, |r, c| fit.centroids[[r, c]]);
 
-    Ok(list!(
+    list!(
         cluster = cluster,
         centroids = centroids,
         inertia = fit.inertia,
         sizes = fit.sizes
-    ))
+    )
 }
 
 /// Assign observations to their nearest centroid. Backs `predict()`.
@@ -190,30 +195,32 @@ fn rust_gmm(
     tolerance: f64,
     reg_covariance: f64,
     seed: f64,
-) -> Result<List> {
+) -> List {
     let data = rmatrix_to_array2_linfa(x);
 
-    let fit = gmm::fit(
-        data,
-        k as usize,
-        gmm::init_from_name(init),
-        n_runs as u64,
-        max_iter as u64,
-        tolerance,
-        reg_covariance,
-        seed as u64,
-    )
-    .map_err(|e| Error::Other(format!("Gaussian mixture fit failed: {e}")))?;
+    let fit = unwrap_or_throw_error(
+        gmm::fit(
+            data,
+            k as usize,
+            gmm::init_from_name(init),
+            n_runs as u64,
+            max_iter as u64,
+            tolerance,
+            reg_covariance,
+            seed as u64,
+        )
+        .map_err(|e| Error::Other(format!("Gaussian mixture fit failed: {e}"))),
+    );
 
     let n_clusters = fit.means.nrows();
     let n_features = fit.means.ncols();
     let means = RMatrix::new_matrix(n_clusters, n_features, |r, c| fit.means[[r, c]]);
 
-    Ok(list!(
+    list!(
         weights = fit.weights,
         means = means,
         covariances = fit.covariances
-    ))
+    )
 }
 
 /// EVoC: direct multi-layer clustering of embedding vectors.
@@ -237,7 +244,7 @@ fn rust_evoc(
     seed: f64,
 ) -> List {
     let n = x.nrows();
-    let result = evoc::run(
+    let result = unwrap_or_throw_error(evoc::run(
         x,
         n_neighbors as usize,
         noise_level,
@@ -249,7 +256,7 @@ fn rust_evoc(
         max_layers as usize,
         n_label_prop_iter as usize,
         seed as u64,
-    );
+    ));
     evoc::result_to_list(&result, n)
 }
 

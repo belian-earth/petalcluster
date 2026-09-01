@@ -3,22 +3,24 @@
 \docType{data}
 \name{rings}
 \alias{rings}
-\title{rings}
+\title{Concentric rings with noise}
 \format{
-A data frame with columns:
-\describe{
-\item{x}{X coordinate}
-\item{y}{Y coordinate}
-\item{cluster}{Cluster assignment}
-}
+A numeric matrix with 1260 rows and columns \code{x} and \code{y}. No labels
+are included; the generating code is in \code{data-raw/rings.R}.
 }
 \source{
-Generated using a custom function.
+Simulated; see \code{data-raw/rings.R}.
 }
 \usage{
 rings
 }
 \description{
-A dataset of concentric rings with noise, used for testing clustering algorithms.
+Three concentric rings of 300, 400 and 500 points with radii 0.5, 1.2 and
+2.0, plus 60 uniformly scattered noise points. A standard case where
+density-based methods succeed and centroid-based ones cannot.
+}
+\examples{
+res <- shoal_hdbscan(rings, min_cluster_size = 15L, min_samples = 5L)
+res
 }
 \keyword{datasets}

@@ -54,16 +54,28 @@ pub fn fit(
         .map_err(|e| e.to_string())?;
 
     let assignments: Array1<usize> = model.predict(dataset.records());
-    let sizes = model
-        .cluster_count()
-        .iter()
-        .map(|&c| c as i32)
-        .collect::<Vec<i32>>();
+    let centroids = model.centroids().to_owned();
+
+    // Not taken from the model: linfa's `inertia()` is the *mean* squared
+    // distance, measured one iteration before the final centroid update, and
+    // `cluster_count()` comes from whichever run happened last rather than
+    // the best one. Both are derived here from the assignments actually
+    // returned, so the three components always describe the same partition.
+    let mut sizes = vec![0i32; k];
+    let mut inertia = 0.0f64;
+    for (row, &c) in dataset.records().rows().into_iter().zip(assignments.iter()) {
+        sizes[c] += 1;
+        inertia += row
+            .iter()
+            .zip(centroids.row(c).iter())
+            .map(|(&a, &b)| (a - b) * (a - b))
+            .sum::<f64>();
+    }
 
     Ok(KMeansFit {
         assignments,
-        centroids: model.centroids().to_owned(),
-        inertia: model.inertia(),
+        centroids,
+        inertia,
         sizes,
     })
 }

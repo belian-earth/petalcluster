@@ -59,10 +59,14 @@ test_that("shoal_evoc returns aligned multi-layer results", {
 
 test_that("shoal_evoc recovers embedding-like cluster structure", {
   data <- evoc_test_data()
-  fit <- shoal_evoc(data$x)
+  # min_cluster_size = 15 is the setting the parity fixtures are bounded at.
+  # The upstream default of 5 over-fragments data this small (n = 840):
+  # across eight seeds it scores best-layer ARI 0.02-0.96 (mean 0.58),
+  # whereas 15 scores 0.93-1.00 (mean 0.98).
+  fit <- shoal_evoc(data$x, min_cluster_size = 15L)
 
-  # Some layer captures the true partition well. The bound is generous:
-  # calibration runs on this data shape score 0.86-0.92.
+  # Some layer captures the true partition well; the bound is generous
+  # relative to the calibration above.
   best <- max(vapply(fit$layers, function(l) ari(data$truth, l), numeric(1L)))
   expect_gte(best, 0.75)
 
@@ -117,11 +121,30 @@ test_that("shoal_evoc validates its inputs", {
   expect_error(shoal_evoc(x, n_neighbors = 0L), "positive integer")
   expect_error(shoal_evoc(x, noise_level = -1), "positive")
   expect_error(shoal_evoc(x, min_cluster_size = 0L), "positive integer")
+  expect_error(shoal_evoc(x, min_cluster_size = 1L), "at least 2")
   expect_error(shoal_evoc(x, min_samples = 0L), "positive integer")
   expect_error(shoal_evoc(x, n_epochs = 0L), "positive integer")
   expect_error(shoal_evoc(x, dim = 0L), "positive integer")
   expect_error(shoal_evoc(x, max_layers = 0L), "positive integer")
   expect_error(shoal_evoc(x, seed = -1L), "non-negative")
+
+  # Finite doubles beyond single-precision range would become NaN inside the
+  # pipeline; they are refused with a usable message instead.
+  huge <- x
+  huge[1L, 1L] <- 1e300
+  expect_error(shoal_evoc(huge), "single precision")
+})
+
+test_that("very large magnitudes still cluster correctly", {
+  # Cosine geometry: directions are all that matter, and the row norm is
+  # accumulated in double so magnitudes whose square overflows single
+  # precision must not zero the rows. Rounding after the rescale perturbs a
+  # stochastic pipeline, so the check is against the truth, not the unscaled
+  # fit.
+  data <- evoc_test_data()
+  fit <- shoal_evoc(data$x * 1e20, min_cluster_size = 15L)
+  best <- max(vapply(fit$layers, function(l) ari(data$truth, l), numeric(1L)))
+  expect_gte(best, 0.75)
 })
 
 test_that("evoc results have no predict method", {

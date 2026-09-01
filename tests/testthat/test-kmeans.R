@@ -133,7 +133,7 @@ test_that("predict checks newdata against the fitted model", {
   with_na <- as.matrix(iris[1:5, 1:4])
   with_na[2L, 1L] <- NA_real_
   # Dropping rows would leave the result misaligned with newdata, so this errors.
-  expect_error(predict(fit, with_na), "missing values")
+  expect_error(predict(fit, with_na), "missing or non-finite")
 })
 
 test_that("density-based results have no predict method", {

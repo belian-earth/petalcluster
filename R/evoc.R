@@ -46,8 +46,11 @@
 #' @param noise_level Tolerance for spreading points out in the learned
 #'   embedding; higher values let clusters absorb more of their surroundings.
 #'   Default `0.5`.
-#' @param min_cluster_size Minimum cluster size at the finest layer.
-#'   Default `5L`.
+#' @param min_cluster_size Minimum cluster size at the finest layer; at
+#'   least 2. Default `5L`, matching upstream, which is calibrated for large inputs;
+#'   on collections of a few thousand rows or fewer it tends to
+#'   over-fragment, and something like `15L` recovers the structure far more
+#'   reliably.
 #' @param min_samples Minimum neighbourhood size for the density estimation.
 #'   Default `5L`.
 #' @param n_epochs Training epochs for the node embedding. Default `50L`.
@@ -79,7 +82,7 @@
 #' centres <- matrix(runif(6 * 48, -1, 1) * 0.6, nrow = 6)
 #' x <- centres[rep(1:6, each = 140L), ] + matrix(rnorm(840 * 48, sd = 0.1), ncol = 48)
 #'
-#' fit <- shoal_evoc(x)
+#' fit <- shoal_evoc(x, min_cluster_size = 15L)
 #' fit
 #' # every granularity remains available:
 #' vapply(fit$layers, function(l) length(unique(l[!is.na(l)])), integer(1))
@@ -99,6 +102,11 @@ shoal_evoc <- function(x,
   check_positive_integer(n_neighbors)
   check_positive_number(noise_level)
   check_positive_integer(min_cluster_size)
+  if (min_cluster_size < 2L) {
+    # The condensed tree treats a size-1 cluster as a point, and the reference
+    # implementation mislabels its sibling in that case; 1 is never meaningful.
+    cli::cli_abort("{.arg min_cluster_size} must be at least 2.")
+  }
   check_positive_integer(min_samples)
   check_positive_integer(n_epochs)
   if (!is.null(dim)) {
@@ -106,6 +114,15 @@ shoal_evoc <- function(x,
   }
   check_positive_integer(max_layers)
   check_count(seed)
+
+  # The port works in single precision; anything `as.single()` cannot hold
+  # would become Inf, then NaN once rows are recentred, deep in the pipeline.
+  if (max(abs(x)) > 3.4028235e38) {
+    cli::cli_abort(c(
+      "{.arg x} contains values too large for single precision.",
+      "i" = "EVoC uses cosine geometry, so rescaling {.arg x} does not change the result."
+    ))
+  }
 
   if (nrow(x) <= n_neighbors) {
     cli::cli_abort(

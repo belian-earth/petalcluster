@@ -61,13 +61,29 @@ pub fn evoc(data: &[f32], dims: usize, params: &EvocParams) -> EvocResult {
     assert!(dims > 0 && data.len() % dims == 0, "data must be n x dims row-major");
     let n = data.len() / dims;
     assert!(n > params.n_neighbors, "need more points than n_neighbors");
+    assert!(params.n_neighbors > 0, "n_neighbors must be positive");
+    assert!(
+        params.base_min_cluster_size >= 2,
+        "base_min_cluster_size must be at least 2: the condensed tree treats a \
+         size-1 cluster as a point and mislabels its sibling"
+    );
+    assert!(
+        params.node_embedding_dim != Some(0),
+        "node_embedding_dim must be positive"
+    );
 
+    // Accumulated in f64: squaring in f32 overflows above ~1.8e19 and would
+    // silently zero the row.
     let mut normed = data.to_vec();
     for row in normed.chunks_exact_mut(dims) {
-        let norm = row.iter().map(|&v| v * v).sum::<f32>().sqrt();
+        let norm = row
+            .iter()
+            .map(|&v| f64::from(v) * f64::from(v))
+            .sum::<f64>()
+            .sqrt();
         if norm > 0.0 {
             for v in row.iter_mut() {
-                *v /= norm;
+                *v = (f64::from(*v) / norm) as f32;
             }
         }
     }

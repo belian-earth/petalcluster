@@ -6,17 +6,29 @@ use evoc_core::pipeline::{evoc, EvocParams, EvocResult};
 use extendr_api::prelude::*;
 
 /// R column-major f64 matrix -> row-major f32, the layout evoc-core expects.
-pub fn rmatrix_to_rowmajor_f32(x: &RMatrix<f64>) -> (Vec<f32>, usize, usize) {
+///
+/// Fails if any value falls outside the single-precision range: `as f32`
+/// saturates such values to infinity, which becomes NaN once rows are
+/// recentred and would panic deep inside the kd-tree. The R side screens
+/// non-finite doubles, so only magnitude can trip this.
+pub fn rmatrix_to_rowmajor_f32(x: &RMatrix<f64>) -> Result<(Vec<f32>, usize, usize)> {
     let n = x.nrows();
     let p = x.ncols();
     let data = x.data();
     let mut out = Vec::with_capacity(n * p);
     for r in 0..n {
         for c in 0..p {
-            out.push(data[c * n + r] as f32);
+            let v = data[c * n + r] as f32;
+            if !v.is_finite() {
+                return Err(Error::Other(
+                    "`x` contains values too large for single precision; rescale it first."
+                        .to_string(),
+                ));
+            }
+            out.push(v);
         }
     }
-    (out, n, p)
+    Ok((out, n, p))
 }
 
 /// One 0-based label vector (-1 for noise) -> 1-indexed with `NA` noise.
@@ -39,8 +51,8 @@ pub fn run(
     max_layers: usize,
     n_label_prop_iter: usize,
     seed: u64,
-) -> EvocResult {
-    let (data, _n, p) = rmatrix_to_rowmajor_f32(&x);
+) -> Result<EvocResult> {
+    let (data, _n, p) = rmatrix_to_rowmajor_f32(&x)?;
     let params = EvocParams {
         n_neighbors,
         noise_level: noise_level as f32,
@@ -53,7 +65,7 @@ pub fn run(
         n_label_prop_iter,
         seed,
     };
-    evoc(&data, p, &params)
+    Ok(evoc(&data, p, &params))
 }
 
 pub fn result_to_list(result: &EvocResult, n: usize) -> List {

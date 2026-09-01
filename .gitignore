@@ -14,3 +14,4 @@ docs
 __pycache__/
 evoc-port/parity/target
 src/rust/evoc-core/target
+src/rust/evoc-core/Cargo.lock
