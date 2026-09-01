@@ -73,8 +73,8 @@ packages <- unique(all_data$package)
 n_dims <- length(dims_values)
 
 plot_path <- "bench/scaling.png"
-png(plot_path, width = 1200, height = 400 * n_dims, res = 120)
-par(mfrow = c(n_dims, 3), mar = c(4.5, 4.5, 2, 1), cex = 0.9)
+png(plot_path, width = 900, height = 400 * n_dims, res = 120)
+par(mfrow = c(n_dims, length(algos)), mar = c(4.5, 4.5, 2, 1), cex = 0.9)
 
 for (d in dims_values) {
   for (algo in algos) {

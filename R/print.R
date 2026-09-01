@@ -43,17 +43,21 @@ print.shoal_hdbscan <- function(x, ...) {
 print.shoal_evoc <- function(x, ...) {
   NextMethod()
 
-  cli::cli_text("Layers (finest first, {cli::symbol$star} = selected):")
-  for (i in seq_along(x$layers)) {
+  cli::cli_text("Layers (finest first, {cli::symbol$tick} = selected):")
+  lines <- vapply(seq_along(x$layers), function(i) {
     l <- x$layers[[i]]
     k <- length(unique(l[!is.na(l)]))
-    noise <- sum(is.na(l))
-    persistence <- signif(x$persistence[[i]], 4L)
-    marker <- if (i == x$layer) cli::symbol$star else " "
-    cli::cli_text(
-      "{marker} {i}: {k} cluster{?s}, {noise} noise, persistence {persistence}"
+    sprintf(
+      "%d: %d cluster%s, %d noise, persistence %s",
+      i, k, if (k == 1L) "" else "s", sum(is.na(l)),
+      format(signif(x$persistence[[i]], 4L))
     )
-  }
+  }, character(1L))
+  # Bullet names control the marker: a tick for the selected layer and an
+  # aligned blank for the rest, which cli_text's whitespace collapsing would
+  # otherwise strip.
+  names(lines) <- ifelse(seq_along(lines) == x$layer, "v", " ")
+  cli::cli_bullets(lines)
 
   invisible(x)
 }

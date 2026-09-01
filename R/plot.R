@@ -12,8 +12,9 @@
 #' @param xcol,ycol Optional column name or index to plot on the x/y axis.
 #'   When both are supplied, a single scatter plot is produced instead of a
 #'   pairs matrix.
-#' @param pal Character vector of colours for clusters. Defaults to
-#'   `grDevices::hcl.colors(n, "Roma")` where `n` is the number of clusters.
+#' @param pal Character vector of colours for clusters. Defaults to the
+#'   qualitative `grDevices::hcl.colors(n, "Dark 3")` where `n` is the number
+#'   of clusters, so every cluster gets a saturated, distinct hue.
 #' @param ... Additional arguments passed to [pairs()] or [plot.default()].
 #'
 #' @returns `x`, invisibly.
@@ -24,7 +25,7 @@ NULL
 #' @rdname plot.shoal
 #' @export
 plot.shoal_clustering <- function(x, xcol = NULL, ycol = NULL,
-                                  pal = grDevices::hcl.colors(max(x$n_clusters, 2L), "Roma"),
+                                  pal = grDevices::hcl.colors(max(x$n_clusters, 2L), "Dark 3"),
                                   ...) {
   plot_clusters(x, title = x$algorithm, xcol = xcol, ycol = ycol, pal = pal, ...)
 }
