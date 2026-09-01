@@ -1,0 +1,218 @@
+---
+title: "Get started with shoal"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Get started with shoal}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  dpi = 96
+)
+```
+
+shoal provides six clustering algorithms behind one interface. Each takes a
+numeric matrix or data frame, returns an object with the shared
+`shoal_clustering` class, and prints and plots the same way. Noise points, where
+an algorithm has them, are `NA` in the `cluster` vector.
+
+This vignette introduces each algorithm in turn: what it assumes, the
+parameters that matter, and what it returns beyond the cluster vector. Every
+example uses the same two datasets, so the algorithms can be compared directly.
+
+```{r setup}
+library(shoal)
+
+# Four measurements of 150 irises: three species, two of which overlap.
+x <- as.matrix(iris[, 1:4])
+
+# Three concentric rings plus scattered noise: shapes no centroid can capture.
+str(rings)
+```
+
+## What every result has in common
+
+```{r shared}
+fit <- shoal_kmeans(x, k = 3L)
+
+fit$cluster[1:10]
+fit$n_clusters
+fit$n_noise
+fit$params
+```
+
+`data` holds the matrix the model was fitted to, so `plot()` needs nothing
+else. With two columns it draws a scatter plot; with more, a scatter plot
+matrix, or a chosen pair via `xcol` and `ycol`.
+
+```{r shared-plot}
+plot(fit, xcol = "Petal.Length", ycol = "Petal.Width")
+```
+
+## k-means: `shoal_kmeans()`
+
+Partitions the data into `k` spherical clusters of similar size by minimising
+the within-cluster sum of squares. It is fast, predictable, and the right
+baseline when clusters are compact and you know roughly how many to expect.
+It is stochastic in its initialisation; `seed` controls that, and R's own
+random number generator has no effect on it.
+
+```{r kmeans}
+km <- shoal_kmeans(x, k = 3L, n_runs = 10L, seed = 1L)
+km
+km$centroids
+```
+
+Because it has cluster centres, it can assign new observations.
+
+```{r kmeans-predict}
+predict(km, x[c(1, 51, 101), ])
+```
+
+`inertia` decreases with `k` by construction, so it locates a point of
+diminishing returns rather than an optimum. See [Choosing the number of
+clusters](#choosing-k) for measures that do have an interior optimum.
+
+## Gaussian mixture: `shoal_gmm()`
+
+Fits `k` multivariate Gaussians by expectation-maximisation. Clusters are
+elliptical rather than spherical, so correlated or differently scaled features
+are handled without pre-scaling, and every observation gets a probability of
+belonging to each component rather than a hard label. `cluster` is the most
+likely component; `posterior` has the full matrix.
+
+```{r gmm}
+gm <- shoal_gmm(x, k = 3L)
+gm
+
+round(gm$posterior[c(1, 51, 101), ], 3)
+```
+
+A fitted mixture has a `logLik()` method, so `AIC()` and `BIC()` work on it
+directly. Only full covariance matrices are supported.
+
+```{r gmm-bic}
+BIC(gm)
+```
+
+## DBSCAN: `shoal_dbscan()`
+
+Grows clusters from points that have at least `min_samples` neighbours within
+radius `eps`, and labels everything else noise. Clusters can be any shape, but
+they must share one density, because `eps` is a single global threshold. The
+rings are an easy case.
+
+```{r dbscan}
+db <- shoal_dbscan(rings, eps = 0.2, min_samples = 5L)
+db
+plot(db)
+```
+
+`eps` is on the scale of the data, so the same value will not carry between
+datasets. `metric = "cosine"` is available for directional data.
+
+## HDBSCAN: `shoal_hdbscan()`
+
+Extends DBSCAN across every density at once by building a hierarchy of
+clusterings and keeping the most stable ones. It has no `eps`; instead
+`min_cluster_size` sets the smallest group worth calling a cluster and
+`min_samples` sets how conservative the density estimate is. Larger values of
+either give fewer, larger clusters and more noise.
+
+```{r hdbscan}
+hdb <- shoal_hdbscan(rings, min_cluster_size = 15L, min_samples = 5L)
+hdb
+```
+
+It also returns a GLOSH outlier score for every observation, near 1 for points
+far from any cluster.
+
+```{r hdbscan-glosh}
+head(order(hdb$outlier_scores, decreasing = TRUE))
+```
+
+Both density algorithms rely on a spatial index that degrades as the number of
+columns grows. For wide data, either reduce the dimension first (see the UMAP
+vignette) or, for embedding vectors, use EVoC.
+
+## Hierarchical clustering: `shoal_hclust()`
+
+Merges observations bottom-up into a dendrogram, which can then be cut at any
+number of clusters. It takes a `dist` object, which `shoal_dist()` computes in
+Rust, or raw data. The result is a standard `hclust`, so `cutree()`,
+`plot()` and `as.dendrogram()` all apply.
+
+```{r hclust}
+d <- shoal_dist(x)
+hc <- shoal_hclust(d, method = "ward")
+
+table(cutree(hc, k = 3), iris$Species)
+plot(hc, labels = FALSE, hang = -1)
+```
+
+Seven linkage methods are available. Note that `"ward"` is R's `"ward.D2"`,
+and that `"centroid"` and `"median"` take plain distances where
+`stats::hclust()` expects squared ones; see `?shoal_hclust`.
+
+## EVoC: `shoal_evoc()`
+
+For embedding vectors: rows that are directions in a high-dimensional space,
+such as the output of a text or image model. EVoC builds a nearest-neighbour
+graph under cosine distance, learns a compact node embedding from it, and
+density-clusters that embedding at several granularities at once. All layers
+are returned; `layer` picks which one populates `cluster`, by default the
+most persistent.
+
+```{r evoc}
+set.seed(1)
+centres <- matrix(runif(6 * 48, -1, 1) * 0.6, nrow = 6)
+emb <- centres[rep(1:6, each = 140L), ] +
+  matrix(rnorm(840 * 48, sd = 0.1), ncol = 48)
+
+ev <- shoal_evoc(emb, min_cluster_size = 15L)
+ev
+```
+
+EVoC is the wrong tool for ordinary tabular data: it assumes cosine geometry
+and is calibrated for thousands to millions of rows. The upstream default
+`min_cluster_size = 5` over-fragments small collections, so raise it first.
+
+## Choosing the number of clusters {#choosing-k}
+
+`shoal_metrics()` computes the Calinski-Harabasz index (higher is better) and
+Davies-Bouldin index (lower is better) for any partition, from the data.
+`shoal_silhouette()` scores every observation from a distance matrix, and
+works for any cluster shape.
+
+```{r choose-k}
+ks <- 2:6
+indices <- do.call(rbind, lapply(ks, function(k) {
+  shoal_metrics(shoal_kmeans(x, k = k))
+}))
+indices$bic <- vapply(ks, function(k) BIC(shoal_gmm(x, k = k)), numeric(1))
+indices
+
+sil <- shoal_silhouette(d, km)
+attr(sil, "avg_width")
+```
+
+The indices disagree on this data, and that is the right answer: two of the
+species overlap, so two and three clusters are both defensible. shoal reports
+the evidence and leaves the decision to you.
+
+## Which algorithm?
+
+| You have                                     | Start with                        |
+|----------------------------------------------|-----------------------------------|
+| Compact clusters, a known `k`                | `shoal_kmeans()`                  |
+| Elliptical clusters, or you want probabilities | `shoal_gmm()`                   |
+| Arbitrary shapes at one density              | `shoal_dbscan()`                  |
+| Arbitrary shapes at varying density          | `shoal_hdbscan()`                 |
+| A dendrogram, or cuts at several `k`         | `shoal_hclust()`                  |
+| Embedding vectors, thousands of rows or more | `shoal_evoc()`                    |

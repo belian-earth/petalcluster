@@ -53,6 +53,10 @@ pak::pak("belian-earth/petalcluster")
 
 Requires a working [Rust toolchain](https://rustup.rs/) (rustc >= 1.81).
 
+Two vignettes go further than this page: `vignette("shoal")` introduces each
+algorithm in turn, and `vignette("umap")` shows what embedding wide data with
+UMAP does to each of them.
+
 ## A worked example
 
 Every algorithm shares the same shape of call and result. Take the four

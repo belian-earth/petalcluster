@@ -45,6 +45,10 @@ pak::pak("belian-earth/petalcluster")
 Requires a working [Rust toolchain](https://rustup.rs/) (rustc \>=
 1.81).
 
+Two vignettes go further than this page: `vignette("shoal")` introduces
+each algorithm in turn, and `vignette("umap")` shows what embedding wide
+data with UMAP does to each of them.
+
 ## A worked example
 
 Every algorithm shares the same shape of call and result. Take the four
@@ -297,10 +301,10 @@ ev
 #> Metric: "cosine"
 #> Parameters: n_neighbors = 15, noise_level = 0.5, min_cluster_size = 15,
 #> min_samples = 5, n_epochs = 50, seed = 1
-#> Clusters: 6, Noise points: 70
+#> Clusters: 8, Noise points: 7
 #> Layers (finest first, ✔ = selected):
-#>   1: 12 clusters, 769 noise, persistence 0
-#> ✔ 2: 6 clusters, 70 noise, persistence 443
+#>   1: 10 clusters, 371 noise, persistence 0
+#> ✔ 2: 8 clusters, 7 noise, persistence 346.8
 ```
 
 The finest layer over-fragments and marks most points as noise; the most
@@ -315,12 +319,14 @@ table(cluster = ev$cluster, truth, useNA = "ifany")
 #>        truth
 #> cluster   1   2   3   4   5   6   7   8 <NA>
 #>    1      0   0   0 200   0   0   0   0    9
-#>    2    400   0   0   0   0   0   0   0    7
-#>    3      0 300   0   0   0   0   0   0    8
-#>    4      0   0   0   0   0 100   0   0    5
-#>    5      0   0 250   0   0   0   0   0   16
-#>    6      0   0   0   0 150   0   0  40   45
-#>    <NA>   0   0   0   0   0   0  60   0   10
+#>    2      0 300   0   0   0   0   0   0    9
+#>    3      0   0   0   0   0   0  60   0    4
+#>    4      0   0   0   0   0   0   0  40    3
+#>    5    400   0   0   0   0   0   0   0    7
+#>    6      0   0   0   0 150   0   0   0   18
+#>    7      0   0   0   0   0 100   0   0    7
+#>    8      0   0 250   0   0   0   0   0   36
+#>    <NA>   0   0   0   0   0   0   0   0    7
 ```
 
 Every layer stays available on the result, so a different granularity is
@@ -328,9 +334,9 @@ an index away rather than a refit.
 
 ``` r
 vapply(ev$layers, function(l) length(unique(l[!is.na(l)])), integer(1))
-#> [1] 12  6
+#> [1] 10  8
 ev$persistence
-#> [1]   0.0000 442.9569
+#> [1]   0.0000 346.7937
 ```
 
 The upstream default `min_cluster_size = 5` is calibrated for large

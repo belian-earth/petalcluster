@@ -25,8 +25,13 @@ Imports:
     rlang,
     stats
 Suggests:
+    knitr,
+    mlbench,
+    rmarkdown,
     testthat (>= 3.0.0),
+    uwot,
     vdiffr (>= 1.0.0)
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 LazyData: true
 URL: https://belian-earth.github.io/petalcluster/,
