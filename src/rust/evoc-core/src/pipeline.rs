@@ -72,16 +72,24 @@ pub fn evoc(data: &[f32], dims: usize, params: &EvocParams) -> EvocResult {
         "node_embedding_dim must be positive"
     );
 
-    // Accumulated in f64: squaring in f32 overflows above ~1.8e19 and would
-    // silently zero the row.
+    // Normalised in f32 as the reference does, which the parity bounds were
+    // set against; the f64 path is taken only when squaring overflows f32
+    // (magnitudes above ~1.8e19), which would otherwise zero the row.
     let mut normed = data.to_vec();
     for row in normed.chunks_exact_mut(dims) {
-        let norm = row
-            .iter()
-            .map(|&v| f64::from(v) * f64::from(v))
-            .sum::<f64>()
-            .sqrt();
-        if norm > 0.0 {
+        let norm = row.iter().map(|&v| v * v).sum::<f32>().sqrt();
+        if norm.is_finite() {
+            if norm > 0.0 {
+                for v in row.iter_mut() {
+                    *v /= norm;
+                }
+            }
+        } else {
+            let norm = row
+                .iter()
+                .map(|&v| f64::from(v) * f64::from(v))
+                .sum::<f64>()
+                .sqrt();
             for v in row.iter_mut() {
                 *v = (f64::from(*v) / norm) as f32;
             }

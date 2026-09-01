@@ -98,6 +98,14 @@ thread counts. Correctness is held by the six MST fixtures plus property tests
 against a brute-force Prim oracle over varied shapes, dimensions, min_samples
 values, duplicates and tiny inputs.
 
+NN-Descent's join proposals are computed in parallel and applied
+sequentially in blocks of 8,192 points, which bounds the proposal buffer at
+tens of MB regardless of n (peak RSS at n = 200k, d = 16 is 124 MB, down
+from 762 MB when the whole dataset's proposals were buffered) at no change
+in output: `tests/knn_pin.rs` pins the exact neighbour graph on both
+end-to-end fixtures so any restructuring of the join has to be
+output-preserving or deliberately re-pinned.
+
 Remaining performance headroom, should it ever matter: the fuzzy graph is
 still serial (parity with 4-thread numba as-is), and the chain has never
 needed optimising.

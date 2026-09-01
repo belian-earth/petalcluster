@@ -15,12 +15,22 @@
 //!
 //! Proposed neighbour updates are computed in parallel but applied
 //! sequentially in point order, so the result is deterministic for a given
-//! seed regardless of thread count.
+//! seed regardless of thread count. Points are processed in blocks so the
+//! proposal buffer stays bounded: the parallel pass reads only state frozen
+//! at iteration start, so computing it block by block yields exactly the
+//! proposals a whole-dataset pass would, and applying blocks in index order
+//! preserves the original application order. The output is bitwise identical
+//! to the unblocked form; only peak memory changes.
 
 use crate::rng::Rng;
 use rayon::prelude::*;
 
 const EXP_NEG_INF: f32 = 1e-8; // similarity floor, as the reference uses
+
+/// Points whose join proposals are buffered before being applied. Large
+/// enough that the sequential apply between blocks is a small fraction of
+/// the parallel join work; small enough to cap the buffer at tens of MB.
+const PROPOSAL_BLOCK: usize = 8192;
 
 /// Eight-lane accumulation so LLVM can vectorise; a single f32 accumulator
 /// would pin the reduction to strict serial order and scalar code.
@@ -188,41 +198,52 @@ pub fn nn_descent(data: &[f32], dims: usize, k: usize, seed: u64) -> KnnGraph {
         let worst_at_start: Vec<f32> = (0..n)
             .map(|i| heap.row(i)[k - 1].d)
             .collect();
-        let proposals: Vec<Vec<(u32, f32, i32)>> = (0..n)
-            .into_par_iter()
-            .map(|i| {
-                let news = &new_cand[i];
-                let olds = &old_cand[i];
-                let mut out = Vec::new();
-                let propose = |a: i32, d: f32, b: i32, out: &mut Vec<(u32, f32, i32)>| {
-                    if d < worst_at_start[a as usize] {
-                        out.push((a as u32, d, b));
-                    }
-                };
-                for (a_pos, &a) in news.iter().enumerate() {
-                    for &b in &news[a_pos + 1..] {
-                        let d = neg_dot(point(a as usize), point(b as usize));
-                        propose(a, d, b, &mut out);
-                        propose(b, d, a, &mut out);
-                    }
-                    for &b in olds.iter() {
-                        if a == b {
-                            continue;
-                        }
-                        let d = neg_dot(point(a as usize), point(b as usize));
-                        propose(a, d, b, &mut out);
-                        propose(b, d, a, &mut out);
-                    }
-                }
-                out
-            })
-            .collect();
 
+        // In the first iteration each point can emit several hundred
+        // proposals (every pair of up to `max_candidates` new candidates,
+        // both directions), so buffering the whole dataset's proposals costs
+        // kilobytes per point and gigabytes at a million rows. Blocking
+        // bounds that at PROPOSAL_BLOCK points' worth without changing the
+        // result: see the module docs.
         let mut n_changed = 0usize;
-        for plist in &proposals {
-            for &(tgt, d, idx) in plist {
-                if Heap::push(heap.row_mut(tgt as usize), d, idx) {
-                    n_changed += 1;
+        let mut proposals: Vec<Vec<(u32, f32, i32)>> = Vec::new();
+        for start in (0..n).step_by(PROPOSAL_BLOCK) {
+            let end = (start + PROPOSAL_BLOCK).min(n);
+            (start..end)
+                .into_par_iter()
+                .map(|i| {
+                    let news = &new_cand[i];
+                    let olds = &old_cand[i];
+                    let mut out = Vec::new();
+                    let propose = |a: i32, d: f32, b: i32, out: &mut Vec<(u32, f32, i32)>| {
+                        if d < worst_at_start[a as usize] {
+                            out.push((a as u32, d, b));
+                        }
+                    };
+                    for (a_pos, &a) in news.iter().enumerate() {
+                        for &b in &news[a_pos + 1..] {
+                            let d = neg_dot(point(a as usize), point(b as usize));
+                            propose(a, d, b, &mut out);
+                            propose(b, d, a, &mut out);
+                        }
+                        for &b in olds.iter() {
+                            if a == b {
+                                continue;
+                            }
+                            let d = neg_dot(point(a as usize), point(b as usize));
+                            propose(a, d, b, &mut out);
+                            propose(b, d, a, &mut out);
+                        }
+                    }
+                    out
+                })
+                .collect_into_vec(&mut proposals);
+
+            for plist in &proposals {
+                for &(tgt, d, idx) in plist {
+                    if Heap::push(heap.row_mut(tgt as usize), d, idx) {
+                        n_changed += 1;
+                    }
                 }
             }
         }
