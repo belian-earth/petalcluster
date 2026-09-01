@@ -8,7 +8,13 @@
 #' @param min_samples Minimum neighbourhood size. Default `15L`.
 #' @param min_cluster_size Minimum cluster size. Default `15L`.
 #' @param metric Distance metric, one of `"euclidean"` or `"cosine"`.
-#' @param boruvka Whether to use Boruvka's algorithm for MST construction. Default `TRUE`.
+#' @param boruvka Whether to build the minimum spanning tree with a
+#'   tree-accelerated Boruvka search rather than Prim's algorithm. Default
+#'   `TRUE`, which is the faster choice in low dimensions. The acceleration
+#'   depends on a spatial index, and above a few dozen columns it becomes
+#'   slower than the plain search: on 20,000 rows in 64 dimensions Boruvka
+#'   takes around 2.5 times as long as `boruvka = FALSE`. Both give the same
+#'   clustering.
 #' @param partial_labels Optional named list for semi-supervised clustering.
 #'   Names are cluster IDs (as strings), values are integer vectors of 1-indexed
 #'   point indices. `NULL` (default) for fully unsupervised clustering.
