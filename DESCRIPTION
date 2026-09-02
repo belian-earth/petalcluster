@@ -23,7 +23,8 @@ Imports:
     grDevices,
     graphics,
     rlang,
-    stats
+    stats,
+    viridisLite
 Suggests:
     knitr,
     mlbench,

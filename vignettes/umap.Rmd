@@ -123,7 +123,7 @@ set.seed(42)
 u <- umap(x, n_neighbors = 30, min_dist = 0, n_threads = 2)
 colnames(u) <- c("UMAP1", "UMAP2")
 
-pal <- grDevices::hcl.colors(6, "Dark 3")
+pal <- shoal_palette(6)
 plot(u, col = pal[as.integer(truth)], pch = 19, cex = 0.4,
      main = "UMAP embedding, coloured by class")
 legend("topleft", legend = levels(truth), col = pal, pch = 19, bty = "n", cex = 0.8)

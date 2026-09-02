@@ -41,6 +41,7 @@ reference:
   desc: Shared print and plot methods, and prediction for centroid models.
   contents:
   - plot.shoal
+  - shoal_palette
   - print.shoal
   - predict.shoal_kmeans
   - predict.shoal_gmm

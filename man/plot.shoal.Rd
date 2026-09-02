@@ -9,7 +9,9 @@
   x,
   xcol = NULL,
   ycol = NULL,
-  pal = grDevices::hcl.colors(max(x$n_clusters, 2L), "Dark 3"),
+  pal = shoal_palette(x$n_clusters),
+  col = NULL,
+  pch = NULL,
   ...
 )
 }
@@ -20,9 +22,12 @@
 When both are supplied, a single scatter plot is produced instead of a
 pairs matrix.}
 
-\item{pal}{Character vector of colours for clusters. Defaults to the
-qualitative \code{grDevices::hcl.colors(n, "Dark 3")} where \code{n} is the number
-of clusters, so every cluster gets a saturated, distinct hue.}
+\item{pal}{Character vector of colours for clusters, indexed by cluster ID.
+Defaults to \code{\link[=shoal_palette]{shoal_palette()}} for the number of clusters found.}
+
+\item{col, pch}{Optional per-observation colours and plotting characters,
+recycled to the number of rows. When given they replace the cluster
+colouring and the noise crosses respectively, and no legend is drawn.}
 
 \item{...}{Additional arguments passed to \code{\link[=pairs]{pairs()}} or \code{\link[=plot.default]{plot.default()}}.}
 }
@@ -38,4 +43,18 @@ instead. Noise points (\code{NA} cluster) are shown as grey crosses.
 When \code{xcol} and \code{ycol} are supplied, a single scatter plot of those two
 variables is produced instead of the full pairs matrix. Columns can be
 specified by name or integer index.
+
+Colours come from \code{pal}, one per cluster, with noise in grey. To colour
+points by something other than their cluster, pass \code{col} directly: it is
+recycled to one entry per observation and used as is. The same goes for
+\code{pch}. The cluster legend is drawn only when neither is overridden, since
+it would no longer describe the points.
+}
+\examples{
+res <- shoal_hdbscan(rings, min_cluster_size = 15L, min_samples = 5L)
+plot(res)
+
+# Colour by something else entirely, e.g. an outlier score.
+plot(res, col = grey(1 - res$outlier_scores), pch = 19)
+
 }
