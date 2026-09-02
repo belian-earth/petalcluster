@@ -37,7 +37,7 @@ for (i in seq_len(nrow(panels))) {
 }
 cat("\nSpeedup > 1 means shoal is faster.\n\n")
 
-# -- Scaling figure: one panel per algorithm and dimensionality, log-log -------
+# -- Scaling figure: one panel per algorithm and dimensionality, log-x --------
 
 styles <- list(
   shoal  = list(col = "#D95F02", pch = 19, lty = 1, label = "shoal (Rust)"),
@@ -62,7 +62,7 @@ for (i in seq_len(nrow(panels))) {
   d <- panels$dims[i]
   sub <- all_data[all_data$algorithm == algo & all_data$dims == d, ]
 
-  plot(NULL, xlim = range(sub$n), ylim = range(sub$median_s), log = "xy",
+  plot(NULL, xlim = range(sub$n), ylim = range(sub$median_s), log = "x",
        xlab = "n (points)", ylab = "seconds", xaxt = "n",
        main = sprintf("%s, d = %d", algo, d))
   at <- sort(unique(sub$n))
