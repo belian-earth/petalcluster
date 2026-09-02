@@ -24,18 +24,18 @@ The number of threads in the pool, invisibly when setting.
 ## Details
 
 Parallel work covers
-[`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md)'s
+[`shoal_evoc()`](https://belian-earth.github.io/shoal/reference/shoal_evoc.md)'s
 neighbour search, spanning tree and node embedding;
-[`shoal_dbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_dbscan.md)'s
+[`shoal_dbscan()`](https://belian-earth.github.io/shoal/reference/shoal_dbscan.md)'s
 neighbour queries and
-[`shoal_hdbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_hdbscan.md)'s
+[`shoal_hdbscan()`](https://belian-earth.github.io/shoal/reference/shoal_hdbscan.md)'s
 core distances and spanning tree;
-[`shoal_kmeans()`](https://belian-earth.github.io/petalcluster/reference/shoal_kmeans.md)'s
+[`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md)'s
 assignment step and initialisation, which the Gaussian mixture shares
 through its k-means start;
-[`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md);
+[`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md);
 and
-[`shoal_silhouette()`](https://belian-earth.github.io/petalcluster/reference/shoal_silhouette.md).
+[`shoal_silhouette()`](https://belian-earth.github.io/shoal/reference/shoal_silhouette.md).
 Hierarchical clustering and the mixture's EM iterations are
 single-threaded. Results never depend on the thread count.
 

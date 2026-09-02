@@ -3,7 +3,7 @@
 Computes a pairwise distance matrix in Rust and returns a standard
 [stats::dist](https://rdrr.io/r/stats/dist.html) object, so the result
 works anywhere a `dist` does:
-[`shoal_hclust()`](https://belian-earth.github.io/petalcluster/reference/shoal_hclust.md),
+[`shoal_hclust()`](https://belian-earth.github.io/shoal/reference/shoal_hclust.md),
 [`stats::cmdscale()`](https://rdrr.io/r/stats/cmdscale.html),
 [`stats::as.dendrogram()`](https://rdrr.io/r/stats/dendrogram.html),
 [`cluster::pam()`](https://rdrr.io/pkg/cluster/man/pam.html) and so on.
@@ -49,13 +49,13 @@ Metrics shared with [`stats::dist()`](https://rdrr.io/r/stats/dist.html)
 follow its definitions exactly, including the way `"canberra"` drops and
 rescales degenerate terms and the way `"binary"` treats non-zero entries
 as "on". `"cosine"` matches the `metric = "cosine"` option on
-[`shoal_dbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_dbscan.md)
+[`shoal_dbscan()`](https://belian-earth.github.io/shoal/reference/shoal_dbscan.md)
 and
-[`shoal_hdbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_hdbscan.md).
+[`shoal_hdbscan()`](https://belian-earth.github.io/shoal/reference/shoal_hdbscan.md).
 
 ## See also
 
-[`shoal_hclust()`](https://belian-earth.github.io/petalcluster/reference/shoal_hclust.md),
+[`shoal_hclust()`](https://belian-earth.github.io/shoal/reference/shoal_hclust.md),
 which consumes the result.
 
 ## Examples

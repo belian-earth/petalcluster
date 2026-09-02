@@ -45,7 +45,7 @@ fit$params
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) needs nothing
 else. With two columns it draws a scatter plot; with more, a scatter
 plot matrix, or a chosen pair via `xcol` and `ycol`. Colours come from
-[`shoal_palette()`](https://belian-earth.github.io/petalcluster/reference/shoal_palette.md),
+[`shoal_palette()`](https://belian-earth.github.io/shoal/reference/shoal_palette.md),
 and `col` and `pch` can be given directly to colour points by something
 other than their cluster, as some of the figures below do.
 
@@ -246,7 +246,7 @@ first (see the UMAP vignette) or, for embedding vectors, use EVoC.
 Merges observations bottom-up into a dendrogram, which can then be cut
 at any number of clusters without refitting. It takes a `dist` object,
 which
-[`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md)
+[`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md)
 computes in Rust, or raw data. The result is a standard `hclust`, so
 [`cutree()`](https://rdrr.io/r/stats/cutree.html),
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html),
@@ -290,7 +290,7 @@ Seven linkage methods are available. Note that `"ward"` is R’s
 `"ward.D2"`, and that `"centroid"` and `"median"` take plain distances
 where [`stats::hclust()`](https://rdrr.io/r/stats/hclust.html) expects
 squared ones; see
-[`?shoal_hclust`](https://belian-earth.github.io/petalcluster/reference/shoal_hclust.md).
+[`?shoal_hclust`](https://belian-earth.github.io/shoal/reference/shoal_hclust.md).
 
 ## EVoC: `shoal_evoc()`
 
@@ -358,10 +358,10 @@ collections, so raise it first.
 
 ## Choosing the number of clusters
 
-[`shoal_metrics()`](https://belian-earth.github.io/petalcluster/reference/shoal_metrics.md)
+[`shoal_metrics()`](https://belian-earth.github.io/shoal/reference/shoal_metrics.md)
 computes the Calinski-Harabasz index (higher is better) and
 Davies-Bouldin index (lower is better) for any partition, from the data.
-[`shoal_silhouette()`](https://belian-earth.github.io/petalcluster/reference/shoal_silhouette.md)
+[`shoal_silhouette()`](https://belian-earth.github.io/shoal/reference/shoal_silhouette.md)
 scores every observation from a distance matrix, and works for any
 cluster shape. A fitted mixture’s
 [`BIC()`](https://rdrr.io/r/stats/AIC.html) penalises parameters, so it
@@ -406,9 +406,9 @@ and leaves the decision to you.
 
 | You have | Start with |
 |----|----|
-| Compact clusters, a known `k` | [`shoal_kmeans()`](https://belian-earth.github.io/petalcluster/reference/shoal_kmeans.md) |
-| Elliptical clusters, or you want probabilities | [`shoal_gmm()`](https://belian-earth.github.io/petalcluster/reference/shoal_gmm.md) |
-| Arbitrary shapes at one density | [`shoal_dbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_dbscan.md) |
-| Arbitrary shapes at varying density | [`shoal_hdbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_hdbscan.md) |
-| A dendrogram, or cuts at several `k` | [`shoal_hclust()`](https://belian-earth.github.io/petalcluster/reference/shoal_hclust.md) |
-| Embedding vectors, thousands of rows or more | [`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md) |
+| Compact clusters, a known `k` | [`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md) |
+| Elliptical clusters, or you want probabilities | [`shoal_gmm()`](https://belian-earth.github.io/shoal/reference/shoal_gmm.md) |
+| Arbitrary shapes at one density | [`shoal_dbscan()`](https://belian-earth.github.io/shoal/reference/shoal_dbscan.md) |
+| Arbitrary shapes at varying density | [`shoal_hdbscan()`](https://belian-earth.github.io/shoal/reference/shoal_hdbscan.md) |
+| A dendrogram, or cuts at several `k` | [`shoal_hclust()`](https://belian-earth.github.io/shoal/reference/shoal_hclust.md) |
+| Embedding vectors, thousands of rows or more | [`shoal_evoc()`](https://belian-earth.github.io/shoal/reference/shoal_evoc.md) |

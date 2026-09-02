@@ -37,7 +37,7 @@ shoal_gmm(
 - n_runs:
 
   Number of restarts, keeping the best fit. Default `1L`: unlike
-  [`shoal_kmeans()`](https://belian-earth.github.io/petalcluster/reference/shoal_kmeans.md)'s
+  [`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md)'s
   10, a single run is the norm for EM (sklearn does the same) because
   the k-means initialisation already starts close and each run is
   expensive. Raise it for small, multimodal problems.
@@ -94,13 +94,13 @@ so [`stats::AIC()`](https://rdrr.io/r/stats/AIC.html) and
 [`stats::BIC()`](https://rdrr.io/r/stats/AIC.html) work directly on a
 fitted model and can be compared across `k`. Unlike the within-cluster
 sum of squares reported by
-[`shoal_kmeans()`](https://belian-earth.github.io/petalcluster/reference/shoal_kmeans.md),
+[`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md),
 these penalise parameter count and so have an interior optimum.
 
 ## See also
 
-[`predict.shoal_gmm()`](https://belian-earth.github.io/petalcluster/reference/predict.shoal_gmm.md),
-[`logLik.shoal_gmm()`](https://belian-earth.github.io/petalcluster/reference/logLik.shoal_gmm.md).
+[`predict.shoal_gmm()`](https://belian-earth.github.io/shoal/reference/predict.shoal_gmm.md),
+[`logLik.shoal_gmm()`](https://belian-earth.github.io/shoal/reference/logLik.shoal_gmm.md).
 
 ## Examples
 

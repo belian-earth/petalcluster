@@ -17,7 +17,7 @@ logLik(object, ...)
 - object:
 
   A fitted
-  [`shoal_gmm()`](https://belian-earth.github.io/petalcluster/reference/shoal_gmm.md)
+  [`shoal_gmm()`](https://belian-earth.github.io/shoal/reference/shoal_gmm.md)
   model.
 
 - ...:

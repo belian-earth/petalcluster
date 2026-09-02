@@ -15,7 +15,7 @@ predict(object, newdata = NULL, ...)
 - object:
 
   A fitted
-  [`shoal_kmeans()`](https://belian-earth.github.io/petalcluster/reference/shoal_kmeans.md)
+  [`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md)
   model.
 
 - newdata:

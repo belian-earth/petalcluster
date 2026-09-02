@@ -86,7 +86,7 @@ identifies a diminishing-returns point rather than an optimum.
 
 ## See also
 
-[`predict.shoal_kmeans()`](https://belian-earth.github.io/petalcluster/reference/predict.shoal_kmeans.md)
+[`predict.shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/predict.shoal_kmeans.md)
 for assigning new observations.
 
 ## Examples

@@ -9,18 +9,18 @@ know which algorithm produced a result.
 
 | Function | Algorithm | Backend | Reach for it when |
 |----|----|----|----|
-| [`shoal_kmeans()`](https://belian-earth.github.io/petalcluster/reference/shoal_kmeans.md) | k-means | [linfa](https://github.com/rust-ml/linfa) | Clusters are roughly spherical and you know how many to expect. |
-| [`shoal_gmm()`](https://belian-earth.github.io/petalcluster/reference/shoal_gmm.md) | Gaussian mixture | linfa | Clusters are elliptical, or you want soft memberships and [`BIC()`](https://rdrr.io/r/stats/AIC.html). |
-| [`shoal_dbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_dbscan.md) | DBSCAN | [petal-clustering](https://github.com/petabi/petal-clustering) | Clusters have arbitrary shape and a common density. |
-| [`shoal_hdbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_hdbscan.md) | HDBSCAN | petal-clustering | Clusters have arbitrary shape and varying density. |
-| [`shoal_hclust()`](https://belian-earth.github.io/petalcluster/reference/shoal_hclust.md) | Agglomerative hierarchical | [kodama](https://github.com/diffeo/kodama) | You want a dendrogram and R’s [`cutree()`](https://rdrr.io/r/stats/cutree.html) ecosystem. |
-| [`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md) | EVoC | In-tree port of [EVoC](https://github.com/TutteInstitute/evoc) | Rows are embedding vectors; you want every granularity at once. |
+| [`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md) | k-means | [linfa](https://github.com/rust-ml/linfa) | Clusters are roughly spherical and you know how many to expect. |
+| [`shoal_gmm()`](https://belian-earth.github.io/shoal/reference/shoal_gmm.md) | Gaussian mixture | linfa | Clusters are elliptical, or you want soft memberships and [`BIC()`](https://rdrr.io/r/stats/AIC.html). |
+| [`shoal_dbscan()`](https://belian-earth.github.io/shoal/reference/shoal_dbscan.md) | DBSCAN | [petal-clustering](https://github.com/petabi/petal-clustering) | Clusters have arbitrary shape and a common density. |
+| [`shoal_hdbscan()`](https://belian-earth.github.io/shoal/reference/shoal_hdbscan.md) | HDBSCAN | petal-clustering | Clusters have arbitrary shape and varying density. |
+| [`shoal_hclust()`](https://belian-earth.github.io/shoal/reference/shoal_hclust.md) | Agglomerative hierarchical | [kodama](https://github.com/diffeo/kodama) | You want a dendrogram and R’s [`cutree()`](https://rdrr.io/r/stats/cutree.html) ecosystem. |
+| [`shoal_evoc()`](https://belian-earth.github.io/shoal/reference/shoal_evoc.md) | EVoC | In-tree port of [EVoC](https://github.com/TutteInstitute/evoc) | Rows are embedding vectors; you want every granularity at once. |
 
-[`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md)
+[`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md)
 builds distance matrices, and
-[`shoal_silhouette()`](https://belian-earth.github.io/petalcluster/reference/shoal_silhouette.md)
+[`shoal_silhouette()`](https://belian-earth.github.io/shoal/reference/shoal_silhouette.md)
 and
-[`shoal_metrics()`](https://belian-earth.github.io/petalcluster/reference/shoal_metrics.md)
+[`shoal_metrics()`](https://belian-earth.github.io/shoal/reference/shoal_metrics.md)
 score a clustering so the number of clusters can be chosen on evidence.
 Distance matrices and dendrograms are returned as R’s own `dist` and
 `hclust` classes, so [`cutree()`](https://rdrr.io/r/stats/cutree.html),
@@ -32,18 +32,18 @@ Distance matrices and dendrograms are returned as R’s own `dist` and
 ``` r
 
 # install.packages("pak")
-pak::pak("belian-earth/petalcluster")
+pak::pak("belian-earth/shoal")
 ```
 
 Requires a working [Rust toolchain](https://rustup.rs/) (rustc \>=
 1.81).
 
 Three vignettes go further than this page:
-[`vignette("shoal")`](https://belian-earth.github.io/petalcluster/articles/shoal.md)
+[`vignette("shoal")`](https://belian-earth.github.io/shoal/articles/shoal.md)
 introduces each algorithm in turn with a picture of what it finds,
-[`vignette("umap")`](https://belian-earth.github.io/petalcluster/articles/umap.md)
+[`vignette("umap")`](https://belian-earth.github.io/shoal/articles/umap.md)
 shows what embedding wide data with UMAP does to each of them, and
-[`vignette("evoc")`](https://belian-earth.github.io/petalcluster/articles/evoc.md)
+[`vignette("evoc")`](https://belian-earth.github.io/shoal/articles/evoc.md)
 clusters real sentence embeddings with EVoC and compares it with the
 alternatives.
 
@@ -87,10 +87,10 @@ km$centroids
 
 `k` is the central modelling decision, so shoal does not guess it. Fit
 across a range and compare.
-[`shoal_metrics()`](https://belian-earth.github.io/petalcluster/reference/shoal_metrics.md)
+[`shoal_metrics()`](https://belian-earth.github.io/shoal/reference/shoal_metrics.md)
 reports the Calinski-Harabasz index (higher is better) and the
 Davies-Bouldin index (lower is better) for any partition;
-[`shoal_gmm()`](https://belian-earth.github.io/petalcluster/reference/shoal_gmm.md)
+[`shoal_gmm()`](https://belian-earth.github.io/shoal/reference/shoal_gmm.md)
 results have a [`logLik()`](https://rdrr.io/r/stats/logLik.html) method,
 so [`BIC()`](https://rdrr.io/r/stats/AIC.html) works on them directly.
 
@@ -120,7 +120,7 @@ modelling decision, which is why shoal leaves it to you.
 
 Silhouette widths give the same verdict per observation. They need a
 distance matrix, which
-[`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md)
+[`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md)
 computes in Rust.
 
 ``` r
@@ -170,9 +170,9 @@ round(head(gm$posterior), 3)
 
 ### Hierarchical clustering
 
-[`shoal_hclust()`](https://belian-earth.github.io/petalcluster/reference/shoal_hclust.md)
+[`shoal_hclust()`](https://belian-earth.github.io/shoal/reference/shoal_hclust.md)
 accepts the distance matrix from
-[`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md),
+[`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md),
 or raw data, and returns a standard `hclust` object.
 
 ``` r
@@ -200,7 +200,7 @@ plot(hc, labels = FALSE, hang = -1, main = "Ward linkage")
 ![](reference/figures/README-hclust-1.png)
 
 The `"ward"` method here is R’s `"ward.D2"`; see
-[`?shoal_hclust`](https://belian-earth.github.io/petalcluster/reference/shoal_hclust.md)
+[`?shoal_hclust`](https://belian-earth.github.io/shoal/reference/shoal_hclust.md)
 for how each linkage maps onto
 [`stats::hclust()`](https://rdrr.io/r/stats/hclust.html).
 
@@ -293,7 +293,7 @@ plot(quakes_hdbscan, xcol = "long", ycol = "lat", asp = 1)
 
 ### Embedding vectors
 
-[`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md)
+[`shoal_evoc()`](https://belian-earth.github.io/shoal/reference/shoal_evoc.md)
 is for a different kind of input: rows that are embedding vectors, such
 as the output of a text or image model, where cosine geometry is the
 right model and the number of rows runs to thousands or millions. EVoC
@@ -378,7 +378,7 @@ dimensions and, for EVoC, on embedding-like data in 48. Scripts and data
 generation are in `bench/`.
 
 ![Scaling
-benchmark](https://github.com/belian-earth/petalcluster/blob/main/bench/scaling.png?raw=true)
+benchmark](https://github.com/belian-earth/shoal/blob/main/bench/scaling.png?raw=true)
 
 Scaling benchmark
 
@@ -412,9 +412,9 @@ Two things to know when the data is wide:
   grows, as they do everywhere. Above a few dozen columns, HDBSCAN’s
   default Boruvka tree search is slower than the plain alternative, so
   pass `boruvka = FALSE` there. See
-  [`?shoal_hdbscan`](https://belian-earth.github.io/petalcluster/reference/shoal_hdbscan.md).
+  [`?shoal_hdbscan`](https://belian-earth.github.io/shoal/reference/shoal_hdbscan.md).
 - For high-dimensional embedding vectors,
-  [`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md)
+  [`shoal_evoc()`](https://belian-earth.github.io/shoal/reference/shoal_evoc.md)
   is the right tool and is orders of magnitude faster than HDBSCAN on
   the raw vectors.
 
@@ -424,12 +424,12 @@ The Rust backends run their parallel stages on a thread pool owned by
 the package: EVoC’s neighbour search, spanning tree and node embedding;
 DBSCAN’s neighbour queries; HDBSCAN’s core distances and spanning tree;
 k-means’ assignment step;
-[`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md)
+[`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md)
 and
-[`shoal_silhouette()`](https://belian-earth.github.io/petalcluster/reference/shoal_silhouette.md).
+[`shoal_silhouette()`](https://belian-earth.github.io/shoal/reference/shoal_silhouette.md).
 By default it uses every logical core. `shoal_threads(n)` resizes it for
 the session and
-[`shoal_threads()`](https://belian-earth.github.io/petalcluster/reference/shoal_threads.md)
+[`shoal_threads()`](https://belian-earth.github.io/shoal/reference/shoal_threads.md)
 reports the current size; `options(shoal.threads = n)` or
 `RAYON_NUM_THREADS` set the default before the package loads. Results
 never depend on the thread count.

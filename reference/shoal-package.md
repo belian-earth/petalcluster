@@ -10,66 +10,65 @@ cluster vector wherever an algorithm has them.
 
 ## Algorithms
 
-- [`shoal_kmeans()`](https://belian-earth.github.io/petalcluster/reference/shoal_kmeans.md):
+- [`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md):
   k-means, partitioning into a fixed number of compact clusters, with
   [`predict()`](https://rdrr.io/r/stats/predict.html) for new
   observations.
 
-- [`shoal_gmm()`](https://belian-earth.github.io/petalcluster/reference/shoal_gmm.md):
+- [`shoal_gmm()`](https://belian-earth.github.io/shoal/reference/shoal_gmm.md):
   Gaussian mixtures, soft probabilistic assignment with elliptical
   clusters, and [`logLik()`](https://rdrr.io/r/stats/logLik.html) so
   [`AIC()`](https://rdrr.io/r/stats/AIC.html) and
   [`BIC()`](https://rdrr.io/r/stats/AIC.html) can choose the component
   count.
 
-- [`shoal_dbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_dbscan.md):
+- [`shoal_dbscan()`](https://belian-earth.github.io/shoal/reference/shoal_dbscan.md):
   DBSCAN, clusters as dense regions of one density separated by sparser
   space.
 
-- [`shoal_hdbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_hdbscan.md):
+- [`shoal_hdbscan()`](https://belian-earth.github.io/shoal/reference/shoal_hdbscan.md):
   HDBSCAN, the hierarchical extension that adapts to clusters of varying
   density and scores outliers.
 
-- [`shoal_hclust()`](https://belian-earth.github.io/petalcluster/reference/shoal_hclust.md):
+- [`shoal_hclust()`](https://belian-earth.github.io/shoal/reference/shoal_hclust.md):
   agglomerative hierarchical clustering with seven linkage methods,
   returning a standard
   [stats::hclust](https://rdrr.io/r/stats/hclust.html) object.
 
-- [`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md):
+- [`shoal_evoc()`](https://belian-earth.github.io/shoal/reference/shoal_evoc.md):
   EVoC, direct multi-granularity clustering of embedding vectors,
   returning every cluster layer rather than one flat partition.
 
 ## Supporting functions
 
-- [`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md):
+- [`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md):
   pairwise distance matrices, returning a standard
   [stats::dist](https://rdrr.io/r/stats/dist.html) object.
 
-- [`shoal_silhouette()`](https://belian-earth.github.io/petalcluster/reference/shoal_silhouette.md)
+- [`shoal_silhouette()`](https://belian-earth.github.io/shoal/reference/shoal_silhouette.md)
   and
-  [`shoal_metrics()`](https://belian-earth.github.io/petalcluster/reference/shoal_metrics.md):
+  [`shoal_metrics()`](https://belian-earth.github.io/shoal/reference/shoal_metrics.md):
   validity measures for choosing the number of clusters.
 
-- [`shoal_palette()`](https://belian-earth.github.io/petalcluster/reference/shoal_palette.md):
+- [`shoal_palette()`](https://belian-earth.github.io/shoal/reference/shoal_palette.md):
   the default cluster colours used by
   [`plot()`](https://rdrr.io/r/graphics/plot.default.html).
 
-- [`shoal_threads()`](https://belian-earth.github.io/petalcluster/reference/shoal_threads.md):
+- [`shoal_threads()`](https://belian-earth.github.io/shoal/reference/shoal_threads.md):
   the size of the thread pool the Rust backends use.
 
 ## Data and vignettes
 
-[rings](https://belian-earth.github.io/petalcluster/reference/rings.md)
-and
-[newsgroups](https://belian-earth.github.io/petalcluster/reference/newsgroups.md)
+[rings](https://belian-earth.github.io/shoal/reference/rings.md) and
+[newsgroups](https://belian-earth.github.io/shoal/reference/newsgroups.md)
 are bundled examples: concentric rings with noise for the density
 algorithms, and real sentence embeddings for EVoC.
-[`vignette("shoal")`](https://belian-earth.github.io/petalcluster/articles/shoal.md)
+[`vignette("shoal")`](https://belian-earth.github.io/shoal/articles/shoal.md)
 introduces each algorithm with a picture of what it finds,
-[`vignette("umap")`](https://belian-earth.github.io/petalcluster/articles/umap.md)
+[`vignette("umap")`](https://belian-earth.github.io/shoal/articles/umap.md)
 shows what a UMAP embedding does to each of them on wide tabular data,
 and
-[`vignette("evoc")`](https://belian-earth.github.io/petalcluster/articles/evoc.md)
+[`vignette("evoc")`](https://belian-earth.github.io/shoal/articles/evoc.md)
 clusters the sentence embeddings and compares EVoC with the
 alternatives.
 
@@ -100,11 +99,11 @@ against fixtures generated from it.
 
 Useful links:
 
-- <https://belian-earth.github.io/petalcluster/>
+- <https://belian-earth.github.io/shoal/>
 
-- <https://github.com/belian-earth/petalcluster>
+- <https://github.com/belian-earth/shoal>
 
-- Report bugs at <https://github.com/belian-earth/petalcluster/issues>
+- Report bugs at <https://github.com/belian-earth/shoal/issues>
 
 ## Author
 

@@ -279,7 +279,7 @@ the one that happened to score best.
 
 ## Why not EVoC?
 
-[`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md)
+[`shoal_evoc()`](https://belian-earth.github.io/shoal/reference/shoal_evoc.md)
 runs this recipe in one call: a nearest-neighbour graph, a learned node
 embedding of it, and a density clustering of that at several
 granularities. It is not the tool for either stage here, though. Its
@@ -288,7 +288,7 @@ directions such as a text or image model produces, and 36 spectral bands
 are not that. Nor is the UMAP layout: it is a two-dimensional Euclidean
 picture, and cosine distance in two dimensions collapses to the angle
 from the origin. For data that is embedding vectors, see
-[`vignette("evoc")`](https://belian-earth.github.io/petalcluster/articles/evoc.md),
+[`vignette("evoc")`](https://belian-earth.github.io/shoal/articles/evoc.md),
 which compares EVoC with this UMAP-then-cluster recipe on real sentence
 embeddings.
 
@@ -307,9 +307,9 @@ embeddings.
   second layout is structure; one that does not is an artefact of the
   drawing.
 - Do not use
-  [`shoal_metrics()`](https://belian-earth.github.io/petalcluster/reference/shoal_metrics.md)
+  [`shoal_metrics()`](https://belian-earth.github.io/shoal/reference/shoal_metrics.md)
   or
-  [`shoal_silhouette()`](https://belian-earth.github.io/petalcluster/reference/shoal_silhouette.md)
+  [`shoal_silhouette()`](https://belian-earth.github.io/shoal/reference/shoal_silhouette.md)
   on the embedding to compare against raw-space results: the scores live
   in different spaces. They remain useful for comparing clusterings of
   the same embedding.

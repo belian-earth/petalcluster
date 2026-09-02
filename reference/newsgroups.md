@@ -3,7 +3,7 @@
 2,400 posts from eight groups of the 20 Newsgroups corpus, 300 per
 group, embedded with the `all-MiniLM-L6-v2` sentence-transformer. Real
 embedding vectors, for trying
-[`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md)
+[`shoal_evoc()`](https://belian-earth.github.io/shoal/reference/shoal_evoc.md)
 and the other algorithms on the kind of input EVoC is built for.
 
 ## Usage

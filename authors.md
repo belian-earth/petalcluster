@@ -7,15 +7,15 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/belian-earth/petalcluster/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/belian-earth/shoal/blob/main/DESCRIPTION)
 
 Last F (2026). *shoal: High-Performance Clustering via Rust*. R package
-version 0.0.0.1, <https://belian-earth.github.io/petalcluster/>.
+version 0.0.0.1, <https://belian-earth.github.io/shoal/>.
 
     @Manual{,
       title = {shoal: High-Performance Clustering via Rust},
       author = {First Last},
       year = {2026},
       note = {R package version 0.0.0.1},
-      url = {https://belian-earth.github.io/petalcluster/},
+      url = {https://belian-earth.github.io/shoal/},
     }

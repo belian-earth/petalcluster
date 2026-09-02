@@ -19,7 +19,7 @@ shoal_silhouette(d, cluster)
   A [stats::dist](https://rdrr.io/r/stats/dist.html) object, or a
   numeric matrix or data frame, in which case Euclidean distances are
   computed with
-  [`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md)
+  [`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md)
   first.
 
 - cluster:
@@ -41,7 +41,7 @@ since it has no within-cluster distances to average.
 
 ## See also
 
-[`shoal_metrics()`](https://belian-earth.github.io/petalcluster/reference/shoal_metrics.md)
+[`shoal_metrics()`](https://belian-earth.github.io/shoal/reference/shoal_metrics.md)
 for indices computed from the data instead.
 
 ## Examples

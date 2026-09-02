@@ -3,8 +3,8 @@
 ### All vignettes
 
 - [Clustering embeddings with
-  EVoC](https://belian-earth.github.io/petalcluster/articles/evoc.md):
+  EVoC](https://belian-earth.github.io/shoal/articles/evoc.md):
 - [Get started with
-  shoal](https://belian-earth.github.io/petalcluster/articles/shoal.md):
+  shoal](https://belian-earth.github.io/shoal/articles/shoal.md):
 - [Clustering after
-  UMAP](https://belian-earth.github.io/petalcluster/articles/umap.md):
+  UMAP](https://belian-earth.github.io/shoal/articles/umap.md):

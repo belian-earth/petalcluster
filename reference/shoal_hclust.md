@@ -25,7 +25,7 @@ shoal_hclust(
   A [stats::dist](https://rdrr.io/r/stats/dist.html) object, or a
   numeric matrix or data frame, in which case Euclidean distances are
   computed with
-  [`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md)
+  [`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md)
   first.
 
 - method:
@@ -60,7 +60,7 @@ rejects such trees, so a warning is issued when it happens.
 
 ## See also
 
-[`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md)
+[`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md)
 for building the distance matrix.
 
 ## Examples

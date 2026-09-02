@@ -98,7 +98,7 @@ vectors and the wrong one for general tabular data. It also wants scale:
 behaviour is calibrated for thousands to millions of rows. On small or
 low-dimensional data it over-fragments and marks much of the input as
 noise (the reference implementation behaves the same way); reach for
-[`shoal_hdbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_hdbscan.md)
+[`shoal_hdbscan()`](https://belian-earth.github.io/shoal/reference/shoal_hdbscan.md)
 there.
 
 ## Layers
@@ -117,7 +117,7 @@ rerun.
 EVoC is stochastic (neighbour search, graph partitioning and the
 embedding all draw random numbers), so `seed` is a parameter rather than
 being taken from R's RNG, as in
-[`shoal_kmeans()`](https://belian-earth.github.io/petalcluster/reference/shoal_kmeans.md).
+[`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md).
 The same seed, parameters and data give bitwise-identical results
 regardless of thread count, a stronger guarantee than the reference
 implementation's, whose parallel stages can race. Expect different seeds

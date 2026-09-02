@@ -6,13 +6,25 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>High-Performance Clustering via Rust • shoal</title>
-<script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" sizes="any" href="favicon.ico">
+<link rel="manifest" href="site.webmanifest">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="High-Performance Clustering via Rust">
 <meta name="description" content="A small, foundational set of clustering algorithms with Rust backends, presented behind one consistent interface: k-means and Gaussian mixtures via linfa, the density-based methods DBSCAN and HDBSCAN via petal-clustering, agglomerative hierarchical clustering via kodama, and EVoC, direct multi-granularity clustering of embedding vectors, via an in-tree port of the reference implementation. All algorithms return objects sharing a common class, so printing and plotting behave identically whichever algorithm produced the result.">
 <meta property="og:description" content="A small, foundational set of clustering algorithms with Rust backends, presented behind one consistent interface: k-means and Gaussian mixtures via linfa, the density-based methods DBSCAN and HDBSCAN via petal-clustering, agglomerative hierarchical clustering via kodama, and EVoC, direct multi-granularity clustering of embedding vectors, via an in-tree port of the reference implementation. All algorithms return objects sharing a common class, so printing and plotting behave identically whichever algorithm produced the result.">
+<meta property="og:image" content="https://belian-earth.github.io/shoal/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +34,7 @@
 
     <a class="navbar-brand me-2" href="index.html">shoal</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.1</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.0.0.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,8 +43,8 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="articles/shoal.html">Get started</a></li>
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="articles/shoal.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
@@ -45,7 +57,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/belian-earth/petalcluster" aria-label="GitHub"><span class="fa fa-github"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/belian-earth/shoal"><span class="fa fa-github"></span></a></li>
       </ul>
 </div>
 
@@ -54,8 +66,11 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="shoal">shoal<a class="anchor" aria-label="anchor" href="#shoal"></a>
-</h1></div>
+<div class="page-header">
+<img src="logo.png" class="logo" alt=""><h1 id="shoal-">shoal 
+<a class="anchor" aria-label="anchor" href="#shoal-"></a>
+</h1>
+</div>
 <!-- badges: start -->
 
 <p>shoal is a small, foundational set of clustering algorithms with Rust backends, presented behind one consistent interface. Every algorithm takes a numeric matrix or data frame, returns an object of the shared <code>shoal_clustering</code> class, and prints and plots the same way. Noise points are <code>NA</code> in the cluster vector, so downstream code never has to know which algorithm produced a result.</p>
@@ -118,7 +133,7 @@
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"belian-earth/petalcluster"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"belian-earth/shoal"</span><span class="op">)</span></span></code></pre></div>
 <p>Requires a working <a href="https://rustup.rs/" class="external-link">Rust toolchain</a> (rustc &gt;= 1.81).</p>
 <p>Three vignettes go further than this page: <code><a href="articles/shoal.html">vignette("shoal")</a></code> introduces each algorithm in turn with a picture of what it finds, <code><a href="articles/umap.html">vignette("umap")</a></code> shows what embedding wide data with UMAP does to each of them, and <code><a href="articles/evoc.html">vignette("evoc")</a></code> clusters real sentence embeddings with EVoC and compares it with the alternatives.</p>
 </div>
@@ -127,7 +142,7 @@
 </h2>
 <p>Every algorithm shares the same shape of call and result. Take the four measurements in <code>iris</code> as a matrix, and ask k-means for three clusters.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://belian-earth.github.io/petalcluster/">shoal</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://belian-earth.github.io/shoal/">shoal</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span></span>
 <span></span>
@@ -347,7 +362,7 @@
 <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
 </h2>
 <p>Every algorithm is benchmarked against the best R alternative and, where one exists, the Python one, at matched settings: the same k, restarts, iteration cap and linkage. Timings are medians of three runs on 20 cores, from 500 to 50,000 points, on Gaussian blobs in 2 and 10 dimensions and, for EVoC, on embedding-like data in 48. Scripts and data generation are in <code>bench/</code>.</p>
-<figure><img src="https://github.com/belian-earth/petalcluster/blob/main/bench/scaling.png?raw=true" alt="Scaling benchmark"><figcaption aria-hidden="true">
+<figure><img src="https://github.com/belian-earth/shoal/blob/main/bench/scaling.png?raw=true" alt="Scaling benchmark"><figcaption aria-hidden="true">
 Scaling benchmark
 </figcaption></figure><p>What the panels show, at 50,000 points unless noted:</p>
 <ul>
@@ -392,8 +407,8 @@ Scaling benchmark
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/belian-earth/petalcluster/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/belian-earth/petalcluster/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/belian-earth/shoal/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/belian-earth/shoal/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -424,8 +439,8 @@ Scaling benchmark
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://extendr.rs/extendr/extendr_api/" class="external-link"><img src="https://img.shields.io/badge/extendr-%5E0.8.1-276DC2" alt="extendr"></a></li>
-<li><a href="https://github.com/belian-earth/petalcluster/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/belian-earth/petalcluster/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
-<li><a href="https://app.codecov.io/gh/belian-earth/petalcluster" class="external-link"><img src="https://codecov.io/gh/belian-earth/petalcluster/graph/badge.svg" alt="Codecov test coverage"></a></li>
+<li><a href="https://github.com/belian-earth/shoal/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/belian-earth/shoal/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://app.codecov.io/gh/belian-earth/shoal" class="external-link"><img src="https://codecov.io/gh/belian-earth/shoal/graph/badge.svg" alt="Codecov test coverage"></a></li>
 <li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
 </ul>
 </div>

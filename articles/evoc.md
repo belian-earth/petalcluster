@@ -4,7 +4,7 @@ Embedding models turn text, images and other objects into vectors whose
 directions carry meaning: two posts about the same thing point the same
 way. Clustering such vectors is how topics are discovered in a corpus,
 and it is what
-[`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md)
+[`shoal_evoc()`](https://belian-earth.github.io/shoal/reference/shoal_evoc.md)
 is for. This vignette runs it on real sentence embeddings, looks at what
 it returns, and compares it with the other ways of clustering the same
 vectors.
@@ -19,7 +19,7 @@ library(shoal)
 `newsgroups` holds 2,400 posts from eight groups of the 20 Newsgroups
 corpus, embedded with a sentence-transformer and reduced to 64
 dimensions (see
-[`?newsgroups`](https://belian-earth.github.io/petalcluster/reference/newsgroups.md)
+[`?newsgroups`](https://belian-earth.github.io/shoal/reference/newsgroups.md)
 for how). The group each post came from is kept for scoring, along with
 the opening of each post for reading.
 
@@ -83,7 +83,7 @@ ev
 #>   2: 17 clusters, 674 noise, persistence 494.2
 #> ✔ 3: 9 clusters, 230 noise, persistence 799.6
 timing[["elapsed"]]
-#> [1] 0.093
+#> [1] 0.086
 ```
 
 ``` r
@@ -282,9 +282,9 @@ rbind(
 )
 #>                   method clusters noise   ari seconds
 #> 1                   EVoC        9   230 0.747    0.09
-#> 2 HDBSCAN on the vectors        7  1651 0.097    2.54
-#> 3      UMAP then HDBSCAN       13   151 0.679    4.16
-#> 4         k-means, k = 8        8     0 0.780    0.14
+#> 2 HDBSCAN on the vectors        7  1651 0.097    2.45
+#> 3      UMAP then HDBSCAN       13   151 0.679    3.70
+#> 4         k-means, k = 8        8     0 0.780    0.13
 ```
 
 HDBSCAN on the raw vectors is the case EVoC exists to fix: in 64
@@ -330,7 +330,7 @@ count.
 - Input must be embedding vectors: rows whose direction carries the
   meaning. EVoC normalises them and works in cosine geometry throughout.
   Tabular measurements are not that; use the other algorithms, and see
-  [`vignette("umap")`](https://belian-earth.github.io/petalcluster/articles/umap.md)
+  [`vignette("umap")`](https://belian-earth.github.io/shoal/articles/umap.md)
   for wide tabular data.
 - Raise `min_cluster_size` first. It sets the finest granularity, and
   the default of 5 is calibrated for corpora far larger than most.

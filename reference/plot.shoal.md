@@ -34,7 +34,7 @@ plot(
 
   Character vector of colours for clusters, indexed by cluster ID.
   Defaults to
-  [`shoal_palette()`](https://belian-earth.github.io/petalcluster/reference/shoal_palette.md)
+  [`shoal_palette()`](https://belian-earth.github.io/shoal/reference/shoal_palette.md)
   for the number of clusters found.
 
 - col, pch:

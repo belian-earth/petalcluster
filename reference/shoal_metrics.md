@@ -39,17 +39,17 @@ A one-row data frame with columns `n`, `k`, `calinski_harabasz` and
   **Lower is better.**
 
 Both assume roughly convex, centroid-shaped clusters, so they suit
-[`shoal_kmeans()`](https://belian-earth.github.io/petalcluster/reference/shoal_kmeans.md)
+[`shoal_kmeans()`](https://belian-earth.github.io/shoal/reference/shoal_kmeans.md)
 and
-[`shoal_gmm()`](https://belian-earth.github.io/petalcluster/reference/shoal_gmm.md)
+[`shoal_gmm()`](https://belian-earth.github.io/shoal/reference/shoal_gmm.md)
 better than the density-based algorithms. For arbitrary cluster shapes
 prefer
-[`shoal_silhouette()`](https://belian-earth.github.io/petalcluster/reference/shoal_silhouette.md),
+[`shoal_silhouette()`](https://belian-earth.github.io/shoal/reference/shoal_silhouette.md),
 which needs only a distance matrix.
 
 ## See also
 
-[`shoal_silhouette()`](https://belian-earth.github.io/petalcluster/reference/shoal_silhouette.md).
+[`shoal_silhouette()`](https://belian-earth.github.io/shoal/reference/shoal_silhouette.md).
 
 ## Examples
 
