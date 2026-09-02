@@ -29,7 +29,9 @@ Defaults to \code{\link[=shoal_palette]{shoal_palette()}} for the number of clus
 recycled to the number of rows. When given they replace the cluster
 colouring and the noise crosses respectively, and no legend is drawn.}
 
-\item{...}{Additional arguments passed to \code{\link[=pairs]{pairs()}} or \code{\link[=plot.default]{plot.default()}}.}
+\item{...}{Additional arguments passed to \code{\link[=pairs]{pairs()}} or \code{\link[=plot.default]{plot.default()}}.
+\code{main}, \code{xlab} and \code{ylab} given here replace the defaults (the algorithm
+name and the column names).}
 }
 \value{
 \code{x}, invisibly.

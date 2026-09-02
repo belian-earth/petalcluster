@@ -24,6 +24,7 @@ Imports:
     graphics,
     rlang,
     stats,
+    utils,
     viridisLite
 Suggests:
     knitr,

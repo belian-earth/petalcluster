@@ -36,6 +36,16 @@ test_that("plot() accepts col and pch without a duplicate-argument error", {
   expect_no_error(plot(res, xcol = "Sepal.Length", ycol = "Petal.Length", pch = 1))
 })
 
+test_that("plot() lets main, xlab and ylab through", {
+  res <- shoal_dbscan(as.matrix(iris[, 1:4]), eps = 0.5, min_samples = 5L)
+  pdf(NULL)
+  on.exit(dev.off())
+  expect_no_error(plot(res, main = "custom"))
+  expect_no_error(plot(res, xcol = 1, ycol = 2, main = "custom", xlab = "a", ylab = "b"))
+  two <- shoal_dbscan(as.matrix(iris[, 1:2]), eps = 0.5, min_samples = 5L)
+  expect_no_error(plot(two, main = "custom", xlab = "a"))
+})
+
 test_that("a palette too short for the clusters is refused", {
   res <- shoal_kmeans(as.matrix(iris[, 1:2]), k = 3L)
   pdf(NULL)

@@ -24,6 +24,8 @@
 #'   recycled to the number of rows. When given they replace the cluster
 #'   colouring and the noise crosses respectively, and no legend is drawn.
 #' @param ... Additional arguments passed to [pairs()] or [plot.default()].
+#'   `main`, `xlab` and `ylab` given here replace the defaults (the algorithm
+#'   name and the column names).
 #'
 #' @returns `x`, invisibly.
 #'
@@ -165,44 +167,53 @@ plot_clusters <- function(obj, title, xcol = NULL, ycol = NULL, pal,
     }
     xi <- resolve_col(xcol, data, "xcol", call = call)
     yi <- resolve_col(ycol, data, "ycol", call = call)
-    plot(
-      data[, xi],
-      data[, yi],
-      col = aes$col,
-      pch = aes$pch,
-      xlab = colnames(data)[xi] %||% paste0("V", xi),
-      ylab = colnames(data)[yi] %||% paste0("V", yi),
-      main = title,
+    scatter_plot(
+      data[, xi], data[, yi], aes,
+      defaults = list(
+        xlab = colnames(data)[xi] %||% paste0("V", xi),
+        ylab = colnames(data)[yi] %||% paste0("V", yi),
+        main = title
+      ),
       ...
     )
     if (aes$legend) {
       plot_legend(aes$pal, obj$n_clusters, obj$n_noise)
     }
   } else if (ncol(data) == 2L) {
-    plot(
-      data[, 1L],
-      data[, 2L],
-      col = aes$col,
-      pch = aes$pch,
-      xlab = colnames(data)[1L] %||% "X1",
-      ylab = colnames(data)[2L] %||% "X2",
-      main = title,
+    scatter_plot(
+      data[, 1L], data[, 2L], aes,
+      defaults = list(
+        xlab = colnames(data)[1L] %||% "X1",
+        ylab = colnames(data)[2L] %||% "X2",
+        main = title
+      ),
       ...
     )
     if (aes$legend) {
       plot_legend(aes$pal, obj$n_clusters, obj$n_noise)
     }
   } else {
-    graphics::pairs(
-      data,
-      col = aes$col,
-      pch = aes$pch,
-      main = title,
-      ...
+    args <- utils::modifyList(
+      list(x = data, col = aes$col, pch = aes$pch, main = title),
+      list(...)
     )
+    do.call(graphics::pairs, args)
   }
 
   invisible(obj)
+}
+
+#' A scatter plot whose labels and title the caller's `...` may override
+#'
+#' `plot.default()` refuses an argument given twice, so `defaults` (labels and
+#' title) and the user's `...` are merged first, with the user's winning.
+#' @noRd
+scatter_plot <- function(x, y, aes, defaults, ...) {
+  args <- utils::modifyList(
+    c(list(x = x, y = y, col = aes$col, pch = aes$pch), defaults),
+    list(...)
+  )
+  do.call(plot, args)
 }
 
 #' Add a legend below the plot, wrapping into multiple rows if needed
