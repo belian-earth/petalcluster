@@ -78,9 +78,9 @@ BENCHMARKS = [
      lambda x: GaussianMixture(n_components=5, covariance_type="full",
                                max_iter=100).fit_predict(x), np.inf),
     ("Ward", "blobs", "scipy",
-     lambda x: linkage(x, method="ward"), 20000),
+     lambda x: linkage(x, method="ward"), np.inf),
     ("Distances", "blobs", "scipy",
-     lambda x: pdist(x), 20000),
+     lambda x: pdist(x), np.inf),
     ("EVoC", "emb", "evoc", evoc_fit, np.inf),
 ]
 

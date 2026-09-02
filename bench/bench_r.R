@@ -7,9 +7,10 @@
 #
 # Every comparison uses matched settings: the same k, the same number of
 # restarts, the same iteration cap, the same linkage. Results are medians of
-# three runs. Alternatives that are quadratic in memory or known to crash at
-# scale are capped by `max_n` and reported as NA above it. R alternatives run
-# in a subprocess so a crash costs one row rather than the run.
+# three runs. Alternatives known to crash at scale are capped by `max_n` and
+# reported as NA above it. R alternatives run in a subprocess so a crash costs
+# one row rather than the run. The Ward and Distances rows at 50,000 points
+# hold 10 GB distance vectors, two at a time for Ward; budget 30 GB of RAM.
 
 library(shoal)
 `%||%` <- function(a, b) if (is.null(a)) b else a
@@ -94,15 +95,13 @@ benchmarks <- list(
     algorithm = "Ward", family = "blobs",
     shoal = function(x) shoal_hclust(shoal_dist(x), method = "ward"),
     alt = function(x) stats::hclust(stats::dist(x), method = "ward.D2"),
-    alt_name = "stats", max_n = 20000L,  # n^2 / 2 distances: 1.6 GB at 20k
-    max_n_shoal = 20000L
+    alt_name = "stats", max_n = Inf   # n^2 / 2 distances: 10 GB at 50k, twice over
   ),
   list(
     algorithm = "Distances", family = "blobs",
     shoal = function(x) shoal_dist(x),
     alt = function(x) stats::dist(x),
-    alt_name = "stats", max_n = 20000L,   # n^2 / 2 doubles: 1.6 GB at 20k
-    max_n_shoal = 20000L
+    alt_name = "stats", max_n = Inf   # n^2 / 2 doubles: 10 GB at 50k
   ),
   list(
     algorithm = "EVoC", family = "emb",
