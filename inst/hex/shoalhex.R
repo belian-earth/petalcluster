@@ -51,20 +51,17 @@ pts <- do.call(
     )
   })
 )
-strays <- data.frame(x = runif(40, 30, w - 30), y = runif(40, 40, h - 40))
+# Strays are scattered uniformly over a disc, so the cloud's outline is
+# round rather than following the frame.
+disc_r <- 104
+stray_r <- disc_r * sqrt(runif(40))
+stray_a <- runif(40, 0, 2 * pi)
+strays <- data.frame(x = cx + stray_r * cos(stray_a), y = cy + stray_r * sin(stray_a))
 pts <- rbind(pts, strays)
 
-# Keep every fish clear of the border: drop points outside the hexagon
-# shrunk towards its centre, so a tail never crosses the edge.
-inset <- 0.9
-ix <- cx + inset * (hx - cx)
-iy <- cy + inset * (hy - cy)
-inside <- vapply(seq_len(nrow(pts)), function(i) {
-  # A point is inside a convex polygon when it lies on the same side of
-  # every edge; the hexagon's vertices run anticlockwise on screen.
-  s <- (ix[-1] - ix[-7]) * (pts$y[i] - iy[-7]) - (iy[-1] - iy[-7]) * (pts$x[i] - ix[-7])
-  all(s <= 0) || all(s >= 0)
-}, logical(1))
+# Keep every fish inside the same disc, well clear of the border, so the
+# whole cloud reads as one round shoal of shoals.
+inside <- (pts$x - cx)^2 + (pts$y - cy)^2 <= disc_r^2
 pts <- pts[inside, ]
 
 # -- Cluster with the package: the colours come from the result. -------------
