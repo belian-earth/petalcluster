@@ -3,6 +3,7 @@
 Run from project root:
   Rscript bench/gen_data.R            # generate shared datasets (once)
   uv run bench/bench_sklearn.py
+  BENCH_ONLY=Ward uv run bench/bench_sklearn.py   # one algorithm, merged into results
 
 Settings match bench_r.R: the same k, restarts, iteration cap and linkage.
 scikit-learn covers DBSCAN, HDBSCAN, k-means and the Gaussian mixture; SciPy
@@ -24,6 +25,7 @@ before timing.
 
 import csv
 import gc
+import os
 import time
 import warnings
 from pathlib import Path
@@ -75,7 +77,7 @@ BENCHMARKS = [
      lambda x: GaussianMixture(n_components=5, covariance_type="full",
                                max_iter=100).fit_predict(x), np.inf),
     ("Ward", "blobs", "scipy",
-     lambda x: linkage(x, method="ward"), 10000),
+     lambda x: linkage(x, method="ward"), 20000),
     ("EVoC", "emb", "evoc", evoc_fit, np.inf),
 ]
 
@@ -84,10 +86,15 @@ DIMS = {"blobs": [2, 10], "emb": [48]}
 
 def main():
     rows = []
-    # Warm the reference EVoC's JIT so timings measure the algorithm.
-    evoc_fit(load_family("emb", 48)[0])
+    only = os.environ.get("BENCH_ONLY", "")
+    benchmarks = [b for b in BENCHMARKS if not only or b[0] == only]
+    if not benchmarks:
+        raise SystemExit(f"No benchmark named {only}")
+    if any(b[0] == "EVoC" for b in benchmarks):
+        # Warm the reference EVoC's JIT so timings measure the algorithm.
+        evoc_fit(load_family("emb", 48)[0])
 
-    for algorithm, family, package, fn, max_n in BENCHMARKS:
+    for algorithm, family, package, fn, max_n in benchmarks:
         for d in DIMS[family]:
             print(f"\n=== {algorithm}, {family} d={d} ===")
             for x in load_family(family, d):
@@ -98,6 +105,10 @@ def main():
                 rows.append((algorithm, family, n, d, package, "" if np.isnan(t) else t))
 
     out = HERE / "results_sklearn.csv"
+    if only and out.exists():
+        with out.open(newline="") as f:
+            kept = [r for r in csv.reader(f) if r and r[0] not in (only, "algorithm")]
+        rows = [tuple(r) for r in kept] + rows
     with out.open("w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["algorithm", "family", "n", "dims", "package", "median_s"])

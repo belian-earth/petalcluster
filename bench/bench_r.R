@@ -3,6 +3,7 @@
 #   Rscript bench/gen_data.R          # generate shared datasets (once)
 #   NOT_CRAN=true R CMD INSTALL .     # release build (once)
 #   Rscript bench/bench_r.R
+#   BENCH_ONLY=Ward Rscript bench/bench_r.R   # one algorithm, merged into results
 #
 # Every comparison uses matched settings: the same k, the same number of
 # restarts, the same iteration cap, the same linkage. Results are medians of
@@ -93,8 +94,8 @@ benchmarks <- list(
     algorithm = "Ward", family = "blobs",
     shoal = function(x) shoal_hclust(shoal_dist(x), method = "ward"),
     alt = function(x) stats::hclust(stats::dist(x), method = "ward.D2"),
-    alt_name = "stats", max_n = 10000L,  # n^2 / 2 distances
-    max_n_shoal = 20000L                 # 1.6 GB of distances at 20k
+    alt_name = "stats", max_n = 20000L,  # n^2 / 2 distances: 1.6 GB at 20k
+    max_n_shoal = 20000L
   ),
   list(
     algorithm = "EVoC", family = "emb",
@@ -107,6 +108,12 @@ benchmarks <- list(
 
 dims_for <- list(blobs = c(2L, 10L), emb = 48L)
 rows <- list()
+
+only <- Sys.getenv("BENCH_ONLY")
+if (nzchar(only)) {
+  benchmarks <- Filter(function(b) b$algorithm == only, benchmarks)
+  if (length(benchmarks) == 0) stop("No benchmark named ", only)
+}
 
 for (b in benchmarks) {
   for (d in dims_for[[b$family]]) {
@@ -137,5 +144,9 @@ for (b in benchmarks) {
 
 results <- do.call(rbind, rows)
 csv_path <- file.path("bench", "results_r.csv")
+if (nzchar(only) && file.exists(csv_path)) {
+  previous <- read.csv(csv_path)
+  results <- rbind(previous[previous$algorithm != only, ], results)
+}
 write.csv(results, csv_path, row.names = FALSE)
 cat("\nSaved:", csv_path, "\n")

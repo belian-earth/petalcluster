@@ -376,10 +376,11 @@ What the panels show, at 50,000 points unless noted:
 - **Gaussian mixture**: 20 to 170 times faster than mclust, which fits a
   hierarchical initialisation first, and level with scikit-learn from
   about 5,000 points, having been several times faster below that.
-- **Ward**: level with base R and SciPy, as expected, since all three
-  run the same nearest-neighbour-chain algorithm; the difference is the
-  Rust distance computation feeding it. Above 10,000 points only shoal
-  is run, at 20,000 the distance matrix alone is 1.6 GB.
+- **Ward**: 1.3 to 1.4 times faster than base R and level with SciPy,
+  which edges it in two dimensions. All three run the same
+  nearest-neighbour-chain algorithm, so the differences are in computing
+  the distances that feed it. Runs stop at 20,000 points, where the
+  distance matrix alone is 1.6 GB.
 - **EVoC**: level with the reference implementation from about 20,000
   points, and several times faster below that, where the reference’s
   compiled kernels have not amortised. The reference here runs on 20
