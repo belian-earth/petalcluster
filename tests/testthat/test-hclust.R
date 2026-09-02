@@ -130,3 +130,21 @@ test_that("shoal_hclust validates its inputs", {
   )
   expect_error(shoal_hclust(truncated), "expected")
 })
+
+test_that("raw data takes the fused path and matches the two-step result", {
+  x <- as.matrix(iris[, 1:4])
+  rownames(x) <- paste0("obs", seq_len(nrow(x)))
+  fused <- shoal_hclust(x, method = "average")
+  stepwise <- shoal_hclust(shoal_dist(x), method = "average")
+  for (component in c("merge", "height", "order", "labels", "method", "dist.method")) {
+    expect_equal(fused[[component]], stepwise[[component]])
+  }
+  expect_identical(fused$labels, rownames(x))
+
+  # A data frame is accepted, and inversion warnings still surface.
+  expect_s3_class(shoal_hclust(iris[, 1:4]), "hclust")
+  expect_warning(shoal_hclust(x[1:60, ], method = "centroid"), "inversions")
+
+  # One row has no pairs to cluster; refused before any distance is computed.
+  expect_error(shoal_hclust(x[1, , drop = FALSE]), "at least 2 rows")
+})

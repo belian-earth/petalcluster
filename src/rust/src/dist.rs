@@ -1,4 +1,3 @@
-use extendr_api::prelude::Rfloat;
 use rayon::prelude::*;
 
 /// Pairwise distance metrics.
@@ -175,14 +174,19 @@ impl Metric {
 /// kodama uses the same convention, so the output can be handed to it
 /// directly.
 ///
-/// `out` is the R vector that will be returned, so nothing is copied: the
-/// run for each row is split off as its own mutable slice and the rows are
-/// filled in parallel. `out.len()` must be `n * (n - 1) / 2`.
+/// `out` is the buffer that will be used directly afterwards, an R vector
+/// for `shoal_dist()` or kodama's scratch for `shoal_hclust()` on raw data,
+/// so nothing is copied: the run for each row is split off as its own
+/// mutable slice and the rows are filled in parallel. `out.len()` must be
+/// `n * (n - 1) / 2`.
 ///
 /// Returns whether every distance is finite. Each row is checked as soon as
 /// it is written, while it is still in cache; a separate pass over the
 /// result on the R side costs more than the distances do on narrow data.
-pub fn condensed_into(data: &[f64], n: usize, p: usize, metric: Metric, out: &mut [Rfloat]) -> bool {
+pub fn condensed_into<T>(data: &[f64], n: usize, p: usize, metric: Metric, out: &mut [T]) -> bool
+where
+    T: From<f64> + Send,
+{
     debug_assert_eq!(data.len(), n * p);
     debug_assert_eq!(out.len(), n * (n - 1) / 2);
     if n < 2 {
@@ -190,7 +194,7 @@ pub fn condensed_into(data: &[f64], n: usize, p: usize, metric: Metric, out: &mu
     }
 
     // Disjoint per-row slices of the output, in row order.
-    let mut rows: Vec<&mut [Rfloat]> = Vec::with_capacity(n - 1);
+    let mut rows: Vec<&mut [T]> = Vec::with_capacity(n - 1);
     let mut rest = out;
     for i in 0..n - 1 {
         let (head, tail) = rest.split_at_mut(n - 1 - i);
@@ -215,8 +219,9 @@ pub fn condensed_into(data: &[f64], n: usize, p: usize, metric: Metric, out: &mu
 /// Fill each row's run of the condensed matrix, rows in parallel, and report
 /// whether every value written is finite.
 #[inline(always)]
-fn fill<F>(data: &[f64], n: usize, p: usize, rows: Vec<&mut [Rfloat]>, f: F) -> bool
+fn fill<T, F>(data: &[f64], n: usize, p: usize, rows: Vec<&mut [T]>, f: F) -> bool
 where
+    T: From<f64> + Send,
     F: Fn(&[f64], &[f64]) -> f64 + Sync,
 {
     rows.into_par_iter()
@@ -229,7 +234,7 @@ where
             for (slot, b) in row.iter_mut().zip(others) {
                 let v = f(a, b);
                 finite &= v.is_finite();
-                *slot = Rfloat::from(v);
+                *slot = T::from(v);
             }
             finite
         })
