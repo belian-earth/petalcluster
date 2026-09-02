@@ -72,9 +72,9 @@ validated against fixtures generated from it.
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://belian-earth.github.io/petalcluster/}
-  \item \url{https://github.com/belian-earth/petalcluster}
-  \item Report bugs at \url{https://github.com/belian-earth/petalcluster/issues}
+  \item \url{https://belian-earth.github.io/shoal/}
+  \item \url{https://github.com/belian-earth/shoal}
+  \item Report bugs at \url{https://github.com/belian-earth/shoal/issues}
 }
 
 }

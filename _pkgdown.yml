@@ -1,14 +1,17 @@
-url: https://belian-earth.github.io/petalcluster/
+url: https://belian-earth.github.io/shoal/
+development:
+  mode: auto
 template:
   bootstrap: 5
   bootswatch: cosmo
   bslib:
-    primary: '#4a6741'
+    primary: '#74ac90ff'
+  math-rendering: mathjax
 navbar:
   structure:
     left:
-    - intro
     - reference
+    - intro
     - articles
     - news
     right:
@@ -17,8 +20,7 @@ navbar:
   components:
     github:
       icon: fa-github
-      href: https://github.com/belian-earth/petalcluster
-      aria-label: GitHub
+      href: https://github.com/belian-earth/shoal
 reference:
 - title: Clustering
   desc: Clustering algorithms.
