@@ -12,8 +12,8 @@
 #' @param d A [stats::dist] object, or a numeric matrix or data frame, in which
 #'   case Euclidean distances are computed with [shoal_dist()] first.
 #' @param cluster A clustering result from this package, or an integer vector of
-#'   cluster IDs. `NA` entries — noise points from the density-based algorithms
-#'   — are excluded, along with their distances.
+#'   cluster IDs. `NA` entries, the noise points of the density-based
+#'   algorithms, are excluded along with their distances.
 #'
 #' @returns A data frame with one row per observation and columns `cluster`,
 #'   `neighbour` (the nearest other cluster) and `width`. The mean width is

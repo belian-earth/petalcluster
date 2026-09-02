@@ -13,7 +13,7 @@
 #'
 #' EVoC assumes cosine geometry: rows are L2-normalised internally and treated
 #' as directions, which is the right model for text/image embedding vectors and
-#' the wrong one for general tabular data. It also wants scale — behaviour is
+#' the wrong one for general tabular data. It also wants scale: behaviour is
 #' calibrated for thousands to millions of rows. On small or low-dimensional
 #' data it over-fragments and marks much of the input as noise (the reference
 #' implementation behaves the same way); reach for [shoal_hdbscan()] there.
@@ -26,14 +26,14 @@
 #' its persistence score and per-point membership strengths; `layer` only
 #' chooses which one populates `cluster` for printing, plotting and the
 #' single-partition helpers. Pick a different layer afterwards by indexing
-#' `layers` directly — the fit does not need to be rerun.
+#' `layers` directly; the fit does not need to be rerun.
 #'
 #' # Reproducibility
 #'
 #' EVoC is stochastic (neighbour search, graph partitioning and the embedding
 #' all draw random numbers), so `seed` is a parameter rather than being taken
 #' from R's RNG, as in [shoal_kmeans()]. The same seed, parameters and data
-#' give bitwise-identical results regardless of thread count — a stronger
+#' give bitwise-identical results regardless of thread count, a stronger
 #' guarantee than the reference implementation's, whose parallel stages can
 #' race. Expect different seeds to give somewhat different clusterings; on
 #' data EVoC suits, the structure they agree on is real.

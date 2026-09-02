@@ -11,8 +11,8 @@ shoal_silhouette(d, cluster)
 case Euclidean distances are computed with \code{\link[=shoal_dist]{shoal_dist()}} first.}
 
 \item{cluster}{A clustering result from this package, or an integer vector of
-cluster IDs. \code{NA} entries — noise points from the density-based algorithms
-— are excluded, along with their distances.}
+cluster IDs. \code{NA} entries, the noise points of the density-based
+algorithms, are excluded along with their distances.}
 }
 \value{
 A data frame with one row per observation and columns \code{cluster},

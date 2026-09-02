@@ -30,7 +30,7 @@ check_numeric_matrix <- function(x, na_action = c("drop", "error"),
   }
 
   # Non-finite values (NA, NaN, Inf) all poison distance computations, and
-  # complete.cases() only catches the first two — so screen on finiteness.
+  # complete.cases() only catches the first two, so screen on finiteness.
   incomplete <- rowSums(!is.finite(x)) > 0L
   if (any(incomplete)) {
     n_drop <- sum(incomplete)

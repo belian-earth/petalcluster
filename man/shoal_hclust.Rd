@@ -29,7 +29,7 @@ hierarchical clustering ecosystem work on the result unchanged.
 }
 \section{Linkage methods}{
 Dissimilarities are squared internally for \code{"ward"}, \code{"centroid"} and
-\code{"median"}, with the square root taken afterwards — the fastcluster and SciPy
+\code{"median"}, with the square root taken afterwards, the fastcluster and SciPy
 convention. Two consequences differ from \code{\link[stats:hclust]{stats::hclust()}}:
 \itemize{
 \item \code{"ward"} corresponds to R's \code{"ward.D2"}, not \code{"ward.D"}.
@@ -39,7 +39,7 @@ convention. Two consequences differ from \code{\link[stats:hclust]{stats::hclust
 
 \code{"weighted"} is R's \code{"mcquitty"} (WPGMA); \code{"average"} is UPGMA.
 
-\code{"centroid"} and \code{"median"} can produce inversions — a merge at a lower
+\code{"centroid"} and \code{"median"} can produce inversions, a merge at a lower
 height than the one before it. This is a property of the methods, not a bug,
 but \code{\link[stats:cutree]{stats::cutree()}} rejects such trees, so a warning is issued when it
 happens.

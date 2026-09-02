@@ -9,36 +9,54 @@
 A small, deliberately foundational set of clustering algorithms with Rust
 backends, presented behind one consistent interface. Every result carries the
 shared \code{"shoal_clustering"} class, so \code{print()} and \code{plot()} behave the same
-way whichever algorithm produced it.
-
-Currently available:
+way whichever algorithm produced it, and noise points are \code{NA} in the
+cluster vector wherever an algorithm has them.
+}
+\section{Algorithms}{
 \itemize{
-\item \code{\link[=shoal_kmeans]{shoal_kmeans()}} — k-means: partitions into a fixed number of clusters, and
-can assign new observations to them.
-\item \code{\link[=shoal_gmm]{shoal_gmm()}} — Gaussian mixtures: soft, probabilistic assignment with
-elliptical clusters, and \code{AIC()}/\code{BIC()} for choosing the component count.
-\item \code{\link[=shoal_dbscan]{shoal_dbscan()}} — DBSCAN: finds clusters as dense regions separated by
-areas of lower density.
-\item \code{\link[=shoal_hdbscan]{shoal_hdbscan()}} — HDBSCAN: hierarchical extension of DBSCAN that adapts
-to clusters of varying density.
-\item \code{\link[=shoal_evoc]{shoal_evoc()}} — EVoC: direct multi-granularity clustering of embedding
+\item \code{\link[=shoal_kmeans]{shoal_kmeans()}}: k-means, partitioning into a fixed number of compact
+clusters, with \code{predict()} for new observations.
+\item \code{\link[=shoal_gmm]{shoal_gmm()}}: Gaussian mixtures, soft probabilistic assignment with
+elliptical clusters, and \code{logLik()} so \code{AIC()} and \code{BIC()} can choose the
+component count.
+\item \code{\link[=shoal_dbscan]{shoal_dbscan()}}: DBSCAN, clusters as dense regions of one density
+separated by sparser space.
+\item \code{\link[=shoal_hdbscan]{shoal_hdbscan()}}: HDBSCAN, the hierarchical extension that adapts to
+clusters of varying density and scores outliers.
+\item \code{\link[=shoal_hclust]{shoal_hclust()}}: agglomerative hierarchical clustering with seven
+linkage methods, returning a standard \link[stats:hclust]{stats::hclust} object.
+\item \code{\link[=shoal_evoc]{shoal_evoc()}}: EVoC, direct multi-granularity clustering of embedding
 vectors, returning every cluster layer rather than one flat partition.
-\item \code{\link[=shoal_hclust]{shoal_hclust()}} — agglomerative hierarchical clustering with seven linkage
-methods, returning a standard \link[stats:hclust]{stats::hclust} object.
-\item \code{\link[=shoal_dist]{shoal_dist()}} — pairwise distance matrices, returning a standard
-\link[stats:dist]{stats::dist} object.
-\item \code{\link[=shoal_silhouette]{shoal_silhouette()}} and \code{\link[=shoal_metrics]{shoal_metrics()}} — validity measures for choosing
-the number of clusters.
+}
 }
 
-k-means and the density-based algorithms take numeric matrices or data frames
-directly.
-Hierarchical clustering works from a distance matrix, so it accepts anything
-\code{\link[stats:dist]{stats::dist()}} would produce as well as raw data.
+\section{Supporting functions}{
+\itemize{
+\item \code{\link[=shoal_dist]{shoal_dist()}}: pairwise distance matrices, returning a standard
+\link[stats:dist]{stats::dist} object.
+\item \code{\link[=shoal_silhouette]{shoal_silhouette()}} and \code{\link[=shoal_metrics]{shoal_metrics()}}: validity measures for
+choosing the number of clusters.
+\item \code{\link[=shoal_palette]{shoal_palette()}}: the default cluster colours used by \code{plot()}.
+\item \code{\link[=shoal_threads]{shoal_threads()}}: the size of the thread pool the Rust backends use.
+}
+}
 
-Returning R's own \code{dist} and \code{hclust} classes rather than bespoke ones is
-deliberate: \code{cutree()}, \code{as.dendrogram()}, \code{cmdscale()} and the rest of the
-ecosystem then work on the results without any glue.
+\section{Data and vignettes}{
+\link{rings} and \link{newsgroups} are bundled examples: concentric rings with noise
+for the density algorithms, and real sentence embeddings for EVoC.
+\code{vignette("shoal")} introduces each algorithm with a picture of what it
+finds, \code{vignette("umap")} shows what a UMAP embedding does to each of them
+on wide tabular data, and \code{vignette("evoc")} clusters the sentence
+embeddings and compares EVoC with the alternatives.
+}
+
+\section{Design}{
+k-means, the mixture and the density-based algorithms take numeric matrices
+or data frames directly. Hierarchical clustering works from a distance
+matrix, so it accepts anything \code{\link[stats:dist]{stats::dist()}} would produce as well as raw
+data. Returning R's own \code{dist} and \code{hclust} classes rather than bespoke ones
+is deliberate: \code{cutree()}, \code{as.dendrogram()}, \code{cmdscale()} and the rest of
+the ecosystem then work on the results without any glue.
 
 The density-based algorithms are bindings to the
 \href{https://github.com/petabi/petal-clustering}{petal-clustering} Rust
@@ -50,6 +68,7 @@ Rust port of the
 \href{https://github.com/TutteInstitute/evoc}{reference implementation},
 validated against fixtures generated from it.
 }
+
 \seealso{
 Useful links:
 \itemize{

@@ -19,7 +19,7 @@ shoal_gmm(
 \item{x}{A numeric matrix or data frame. Data frames are coerced to a matrix
 using their numeric columns (non-numeric columns are dropped).}
 
-\item{k}{Number of mixture components. Required — there is no sensible
+\item{k}{Number of mixture components. Required, since there is no sensible
 default for the central modelling decision.}
 
 \item{init}{Initialisation method: \code{"kmeans"} (default) or \code{"random"}.}
@@ -59,7 +59,7 @@ Clusters are elliptical rather than spherical, so a GMM handles correlated
 and differently-scaled features that k-means would split badly.
 }
 \section{Covariance structure}{
-Only full covariance matrices are supported — each component gets its own
+Only full covariance matrices are supported: each component gets its own
 unconstrained matrix. The constrained families \code{mclust} offers (spherical,
 diagonal, tied) are not available upstream.
 }

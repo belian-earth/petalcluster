@@ -29,7 +29,7 @@ matrix stored column-major, with \code{Size}, \code{Labels}, \code{Diag}, \code{
 }
 \description{
 Computes a pairwise distance matrix in Rust and returns a standard
-\link[stats:dist]{stats::dist} object, so the result works anywhere a \code{dist} does —
+\link[stats:dist]{stats::dist} object, so the result works anywhere a \code{dist} does:
 \code{\link[=shoal_hclust]{shoal_hclust()}}, \code{\link[stats:cmdscale]{stats::cmdscale()}}, \code{\link[stats:as.dendrogram]{stats::as.dendrogram()}},
 \code{cluster::pam()} and so on.
 }

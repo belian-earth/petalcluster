@@ -1,7 +1,7 @@
 #' Pairwise Distance Matrix
 #'
 #' Computes a pairwise distance matrix in Rust and returns a standard
-#' [stats::dist] object, so the result works anywhere a `dist` does —
+#' [stats::dist] object, so the result works anywhere a `dist` does:
 #' [shoal_hclust()], [stats::cmdscale()], [stats::as.dendrogram()],
 #' `cluster::pam()` and so on.
 #'
@@ -91,7 +91,7 @@ new_dist <- function(v, n, labels = NULL, method = "euclidean", call = NULL) {
 #' Subset a `dist` object to a set of kept observations
 #'
 #' Works directly on the condensed vector via R's own indexing formula, so it
-#' never materialises the full `n x n` matrix — which matters at exactly the
+#' never materialises the full `n x n` matrix, which matters at exactly the
 #' sizes where distance matrices are already straining memory.
 #'
 #' @param d A `dist` object.

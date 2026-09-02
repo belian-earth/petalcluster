@@ -4,7 +4,7 @@
 #' \href{https://github.com/rust-ml/linfa}{linfa} toolkit, with k-means++ and
 #' k-means|| initialisation.
 #'
-#' Unlike the density-based algorithms, k-means partitions every observation —
+#' Unlike the density-based algorithms, k-means partitions every observation:
 #' there is no noise class, so `cluster` never contains `NA`. It is also
 #' predictive: [predict()] assigns new observations to the fitted centroids.
 #'
@@ -17,13 +17,13 @@
 #' # Choosing k
 #'
 #' `inertia` (the within-cluster sum of squares) is returned so it can be
-#' compared across values of `k` — the usual scree or elbow approach. Note that
+#' compared across values of `k`, the usual scree or elbow approach. Note that
 #' it decreases monotonically with `k` by construction, so it identifies a
 #' diminishing-returns point rather than an optimum.
 #'
 #' @param x A numeric matrix or data frame. Data frames are coerced to a matrix
 #'   using their numeric columns (non-numeric columns are dropped).
-#' @param k Number of clusters. Required — there is no sensible default for
+#' @param k Number of clusters. Required, since there is no sensible default for
 #'   the central modelling decision. Must be at least 1 and no more than `nrow(x)`.
 #' @param init Initialisation method. `"kmeans++"` (default) is the usual
 #'   choice; `"kmeans_parallel"` scales better past roughly 100 clusters;

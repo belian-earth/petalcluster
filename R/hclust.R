@@ -9,7 +9,7 @@
 #' # Linkage methods
 #'
 #' Dissimilarities are squared internally for `"ward"`, `"centroid"` and
-#' `"median"`, with the square root taken afterwards — the fastcluster and SciPy
+#' `"median"`, with the square root taken afterwards, the fastcluster and SciPy
 #' convention. Two consequences differ from [stats::hclust()]:
 #'
 #' - `"ward"` corresponds to R's `"ward.D2"`, not `"ward.D"`.
@@ -18,7 +18,7 @@
 #'
 #' `"weighted"` is R's `"mcquitty"` (WPGMA); `"average"` is UPGMA.
 #'
-#' `"centroid"` and `"median"` can produce inversions — a merge at a lower
+#' `"centroid"` and `"median"` can produce inversions, a merge at a lower
 #' height than the one before it. This is a property of the methods, not a bug,
 #' but [stats::cutree()] rejects such trees, so a warning is issued when it
 #' happens.

@@ -13,7 +13,7 @@
 #'
 #' # Covariance structure
 #'
-#' Only full covariance matrices are supported — each component gets its own
+#' Only full covariance matrices are supported: each component gets its own
 #' unconstrained matrix. The constrained families `mclust` offers (spherical,
 #' diagonal, tied) are not available upstream.
 #'
@@ -26,7 +26,7 @@
 #'
 #' @param x A numeric matrix or data frame. Data frames are coerced to a matrix
 #'   using their numeric columns (non-numeric columns are dropped).
-#' @param k Number of mixture components. Required — there is no sensible
+#' @param k Number of mixture components. Required, since there is no sensible
 #'   default for the central modelling decision.
 #' @param init Initialisation method: `"kmeans"` (default) or `"random"`.
 #' @param n_runs Number of restarts, keeping the best fit. Default `1L`:
