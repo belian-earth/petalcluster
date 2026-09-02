@@ -348,10 +348,12 @@ first thing to try.
 
 ## Performance
 
-The plot below compares wall-clock time for the density-based algorithms
-against the [dbscan](https://cran.r-project.org/package=dbscan) R
-package and Python’s [scikit-learn](https://scikit-learn.org/), on data
-in 2 and 10 dimensions from 500 to 50,000 points.
+Every algorithm is benchmarked against the best R alternative and, where
+one exists, the Python one, at matched settings: the same k, restarts,
+iteration cap and linkage. Timings are medians of three runs on 20
+cores, from 500 to 50,000 points, on Gaussian blobs in 2 and 10
+dimensions and, for EVoC, on embedding-like data in 48. Scripts and data
+generation are in `bench/`.
 
 <figure>
 <img
@@ -359,6 +361,29 @@ src="https://github.com/belian-earth/petalcluster/blob/main/bench/scaling.png?ra
 alt="Scaling benchmark" />
 <figcaption aria-hidden="true">Scaling benchmark</figcaption>
 </figure>
+
+What the panels show, at 50,000 points unless noted:
+
+- **DBSCAN**: 6 to 9 times faster than the dbscan package and 1.5 to 5
+  times faster than scikit-learn, the gap growing with dimension.
+- **HDBSCAN**: 20 times faster than scikit-learn in 2 dimensions and 2
+  times in 10. The dbscan package builds a full distance matrix and is
+  40 times slower at 20,000 points, its largest feasible size here.
+- **k-means**: level with base R’s Hartigan-Wong in 2 dimensions and 2
+  times faster in 10, with identical within-cluster sums of squares.
+  scikit-learn’s times are erratic at these sizes because its OpenMP
+  threading oversubscribes a 20-core machine.
+- **Gaussian mixture**: 20 to 170 times faster than mclust, which fits a
+  hierarchical initialisation first, and level with scikit-learn from
+  about 5,000 points, having been several times faster below that.
+- **Ward**: level with base R and SciPy, as expected, since all three
+  run the same nearest-neighbour-chain algorithm; the difference is the
+  Rust distance computation feeding it. Above 10,000 points only shoal
+  is run, at 20,000 the distance matrix alone is 1.6 GB.
+- **EVoC**: level with the reference implementation from about 20,000
+  points, and several times faster below that, where the reference’s
+  compiled kernels have not amortised. The reference here runs on 20
+  numba threads.
 
 Two things to know when the data is wide:
 
