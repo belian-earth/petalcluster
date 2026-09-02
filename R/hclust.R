@@ -62,7 +62,8 @@ shoal_hclust <- function(d,
   }
 
   values <- as.double(d)
-  expected <- n * (n - 1L) / 2L
+  # In double: the integer product overflows past 46,341 observations.
+  expected <- as.double(n) * (n - 1) / 2
   if (length(values) != expected) {
     cli::cli_abort(
       "{.arg d} has {length(values)} dissimilarit{?y/ies}, expected {expected} for {n} observations."

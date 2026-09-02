@@ -112,11 +112,8 @@ subset_dist <- function(d, keep) {
   # Every kept pair (a < b), enumerated in dist's column-major order.
   a <- rep(seq_len(m - 1L), times = (m - 1L):1L)
   b <- sequence((m - 1L):1L) + a
-  i <- pos[a]
-  j <- pos[b]
 
-  # R's condensed index for the pair (i < j) among n observations.
-  old_index <- n * (i - 1) - i * (i - 1) / 2 + j - i
+  old_index <- dist_index(n, pos[a], pos[b])
 
   new_dist(
     as.double(d)[old_index],
@@ -124,6 +121,18 @@ subset_dist <- function(d, keep) {
     labels = attr(d, "Labels")[keep],
     method = attr(d, "method")
   )
+}
+
+#' R's condensed `dist` index of the pair `i < j` among `n` observations
+#'
+#' Computed in double: the products overflow R's integers past 46,341
+#' observations, well within the sizes a distance matrix can reach.
+#' @noRd
+dist_index <- function(n, i, j) {
+  n <- as.double(n)
+  i <- as.double(i)
+  j <- as.double(j)
+  n * (i - 1) - i * (i - 1) / 2 + j - i
 }
 
 #' Does a matrix look like a square distance matrix rather than data?

@@ -63,6 +63,16 @@ test_that("a square distance matrix is refused as raw data", {
   expect_s3_class(shoal_hclust(stats::as.dist(m)), "hclust")
 })
 
+test_that("dist sizes past the integer square root do not overflow", {
+  # 50,000 observations give 1,249,975,000 pairs, beyond R's integer range
+  # in the intermediate products.
+  expect_identical(dist_index(50000L, 50000L - 1L, 50000L), 1249975000)
+  expect_false(anyNA(dist_index(50000L, c(1L, 49999L), c(2L, 50000L))))
+
+  fake <- structure(double(3), Size = 50000L, class = "dist")
+  expect_error(shoal_hclust(fake), "1249975000")
+})
+
 test_that("subset_dist agrees with subsetting the full matrix", {
   x <- as.matrix(iris[1:12, 1:4])
   rownames(x) <- letters[1:12]
