@@ -6,9 +6,9 @@
 <!-- badges: start -->
 
 [![extendr](https://img.shields.io/badge/extendr-%5E0.8.1-276DC2)](https://extendr.rs/extendr/extendr_api/)
-[![R-CMD-check](https://github.com/belian-earth/petalcluster/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/belian-earth/petalcluster/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/belian-earth/shoal/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/belian-earth/shoal/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
-coverage](https://codecov.io/gh/belian-earth/petalcluster/graph/badge.svg)](https://app.codecov.io/gh/belian-earth/petalcluster)
+coverage](https://codecov.io/gh/belian-earth/shoal/graph/badge.svg)](https://app.codecov.io/gh/belian-earth/shoal)
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
@@ -39,7 +39,7 @@ and `cmdscale()` work without glue.
 
 ``` r
 # install.packages("pak")
-pak::pak("belian-earth/petalcluster")
+pak::pak("belian-earth/shoal")
 ```
 
 Requires a working [Rust toolchain](https://rustup.rs/) (rustc \>=
@@ -357,7 +357,7 @@ generation are in `bench/`.
 
 <figure>
 <img
-src="https://github.com/belian-earth/petalcluster/blob/main/bench/scaling.png?raw=true"
+src="https://github.com/belian-earth/shoal/blob/main/bench/scaling.png?raw=true"
 alt="Scaling benchmark" />
 <figcaption aria-hidden="true">Scaling benchmark</figcaption>
 </figure>

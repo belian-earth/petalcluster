@@ -1,4 +1,4 @@
-url: https://belian-earth.github.io/petalcluster/
+url: https://belian-earth.github.io/shoal/
 template:
   bootstrap: 5
   bootswatch: cosmo
@@ -17,7 +17,7 @@ navbar:
   components:
     github:
       icon: fa-github
-      href: https://github.com/belian-earth/petalcluster
+      href: https://github.com/belian-earth/shoal
       aria-label: GitHub
 reference:
 - title: Clustering

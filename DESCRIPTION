@@ -38,7 +38,7 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 LazyData: true
-URL: https://belian-earth.github.io/petalcluster/,
-    https://github.com/belian-earth/petalcluster
-BugReports: https://github.com/belian-earth/petalcluster/issues
+URL: https://belian-earth.github.io/shoal/,
+    https://github.com/belian-earth/shoal
+BugReports: https://github.com/belian-earth/shoal/issues
 Config/roxygen2/version: 8.0.0
