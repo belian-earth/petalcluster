@@ -35,3 +35,25 @@ test_that("results do not depend on the thread count", {
   four <- run()
   expect_identical(one, four)
 })
+
+test_that("the load-time default follows option, then variable, then cores", {
+  old <- shoal_threads()
+  on.exit(shoal_threads(old))
+
+  withr::with_options(list(shoal.threads = 5), expect_identical(default_threads(), 5L))
+  withr::with_envvar(c(RAYON_NUM_THREADS = "3"), expect_identical(default_threads(), 3L))
+  withr::with_envvar(c(RAYON_NUM_THREADS = "", "_R_CHECK_LIMIT_CORES_" = "TRUE"),
+                     expect_lte(default_threads(), 2L))
+  withr::with_envvar(c(RAYON_NUM_THREADS = "", "_R_CHECK_LIMIT_CORES_" = ""), {
+    withr::with_options(list(shoal.threads = NULL), {
+      expect_identical(default_threads(), max(parallel::detectCores(logical = TRUE), 1L))
+    })
+  })
+
+  # .onLoad applies the default to the pool. pkgload does not keep the hook
+  # in the namespace, so this part runs only against an installed package.
+  onload <- get0(".onLoad", envir = asNamespace("shoal"), inherits = FALSE)
+  skip_if(is.null(onload), ".onLoad not present under load_all()")
+  withr::with_options(list(shoal.threads = 2), onload(NULL, "shoal"))
+  expect_identical(shoal_threads(), 2L)
+})

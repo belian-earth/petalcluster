@@ -219,7 +219,9 @@ scatter_plot <- function(x, y, aes, defaults, ...) {
 #' Add a legend below the plot, wrapping into multiple rows if needed
 #' @noRd
 plot_legend <- function(pal, n_clusters, n_noise) {
-  legend_labels <- paste("Cluster", seq_len(n_clusters))
+  # sprintf() over an empty index gives an empty vector; paste() would give a
+  # single "Cluster " label when there are no clusters at all.
+  legend_labels <- sprintf("Cluster %d", seq_len(n_clusters))
   legend_col <- pal[seq_len(n_clusters)]
   legend_pch <- rep(19L, n_clusters)
 
