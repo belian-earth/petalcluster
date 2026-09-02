@@ -9,11 +9,11 @@
 Source:
 [`DESCRIPTION`](https://github.com/belian-earth/petalcluster/blob/main/DESCRIPTION)
 
-Last F (2026). *petalcluster: Density-Based Clustering via Rust*. R
-package version 0.0.0.1, <https://belian-earth.github.io/petalcluster/>.
+Last F (2026). *shoal: High-Performance Clustering via Rust*. R package
+version 0.0.0.1, <https://belian-earth.github.io/petalcluster/>.
 
     @Manual{,
-      title = {petalcluster: Density-Based Clustering via Rust},
+      title = {shoal: High-Performance Clustering via Rust},
       author = {First Last},
       year = {2026},
       note = {R package version 0.0.0.1},

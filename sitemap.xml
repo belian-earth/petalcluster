@@ -1,14 +1,31 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://belian-earth.github.io/petalcluster/404.html</loc></url>
 <url><loc>https://belian-earth.github.io/petalcluster/LICENSE.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/articles/evoc.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/articles/index.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/articles/shoal.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/articles/umap.html</loc></url>
 <url><loc>https://belian-earth.github.io/petalcluster/authors.html</loc></url>
 <url><loc>https://belian-earth.github.io/petalcluster/index.html</loc></url>
 <url><loc>https://belian-earth.github.io/petalcluster/reference/index.html</loc></url>
-<url><loc>https://belian-earth.github.io/petalcluster/reference/petal_dbscan.html</loc></url>
-<url><loc>https://belian-earth.github.io/petalcluster/reference/petal_hdbscan.html</loc></url>
-<url><loc>https://belian-earth.github.io/petalcluster/reference/petal_optics.html</loc></url>
-<url><loc>https://belian-earth.github.io/petalcluster/reference/petalcluster-package.html</loc></url>
-<url><loc>https://belian-earth.github.io/petalcluster/reference/plot.petal.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/logLik.shoal_gmm.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/newsgroups.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/plot.shoal.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/predict.shoal_gmm.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/predict.shoal_kmeans.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/print.shoal.html</loc></url>
 <url><loc>https://belian-earth.github.io/petalcluster/reference/rings.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/shoal-package.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/shoal_dbscan.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/shoal_dist.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/shoal_evoc.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/shoal_gmm.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/shoal_hclust.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/shoal_hdbscan.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/shoal_kmeans.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/shoal_metrics.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/shoal_palette.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/shoal_silhouette.html</loc></url>
+<url><loc>https://belian-earth.github.io/petalcluster/reference/shoal_threads.html</loc></url>
 </urlset>
 

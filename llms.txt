@@ -1,13 +1,36 @@
-# petalcluster
+# shoal
 
-R bindings to the
-[petal-clustering](https://github.com/petabi/petal-clustering) Rust
-library, providing fast density-based clustering via **DBSCAN**,
-**HDBSCAN**, and **OPTICS**.
+shoal is a small, foundational set of clustering algorithms with Rust
+backends, presented behind one consistent interface. Every algorithm
+takes a numeric matrix or data frame, returns an object of the shared
+`shoal_clustering` class, and prints and plots the same way. Noise
+points are `NA` in the cluster vector, so downstream code never has to
+know which algorithm produced a result.
+
+| Function | Algorithm | Backend | Reach for it when |
+|----|----|----|----|
+| [`shoal_kmeans()`](https://belian-earth.github.io/petalcluster/reference/shoal_kmeans.md) | k-means | [linfa](https://github.com/rust-ml/linfa) | Clusters are roughly spherical and you know how many to expect. |
+| [`shoal_gmm()`](https://belian-earth.github.io/petalcluster/reference/shoal_gmm.md) | Gaussian mixture | linfa | Clusters are elliptical, or you want soft memberships and [`BIC()`](https://rdrr.io/r/stats/AIC.html). |
+| [`shoal_dbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_dbscan.md) | DBSCAN | [petal-clustering](https://github.com/petabi/petal-clustering) | Clusters have arbitrary shape and a common density. |
+| [`shoal_hdbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_hdbscan.md) | HDBSCAN | petal-clustering | Clusters have arbitrary shape and varying density. |
+| [`shoal_hclust()`](https://belian-earth.github.io/petalcluster/reference/shoal_hclust.md) | Agglomerative hierarchical | [kodama](https://github.com/diffeo/kodama) | You want a dendrogram and R’s [`cutree()`](https://rdrr.io/r/stats/cutree.html) ecosystem. |
+| [`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md) | EVoC | In-tree port of [EVoC](https://github.com/TutteInstitute/evoc) | Rows are embedding vectors; you want every granularity at once. |
+
+[`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md)
+builds distance matrices, and
+[`shoal_silhouette()`](https://belian-earth.github.io/petalcluster/reference/shoal_silhouette.md)
+and
+[`shoal_metrics()`](https://belian-earth.github.io/petalcluster/reference/shoal_metrics.md)
+score a clustering so the number of clusters can be chosen on evidence.
+Distance matrices and dendrograms are returned as R’s own `dist` and
+`hclust` classes, so [`cutree()`](https://rdrr.io/r/stats/cutree.html),
+[`as.dendrogram()`](https://rdrr.io/r/stats/dendrogram.html) and
+[`cmdscale()`](https://rdrr.io/r/stats/cmdscale.html) work without glue.
 
 ## Installation
 
 ``` r
+
 # install.packages("pak")
 pak::pak("belian-earth/petalcluster")
 ```
@@ -15,119 +38,517 @@ pak::pak("belian-earth/petalcluster")
 Requires a working [Rust toolchain](https://rustup.rs/) (rustc \>=
 1.81).
 
-## Why density-based clustering?
+Three vignettes go further than this page:
+[`vignette("shoal")`](https://belian-earth.github.io/petalcluster/articles/shoal.md)
+introduces each algorithm in turn with a picture of what it finds,
+[`vignette("umap")`](https://belian-earth.github.io/petalcluster/articles/umap.md)
+shows what embedding wide data with UMAP does to each of them, and
+[`vignette("evoc")`](https://belian-earth.github.io/petalcluster/articles/evoc.md)
+clusters real sentence embeddings with EVoC and compares it with the
+alternatives.
 
-Classical methods like k-means assume convex, evenly-sized clusters.
-Real data is rarely that clean. Density-based methods find clusters of
-arbitrary shape and naturally separate noise.
+## A worked example
+
+Every algorithm shares the same shape of call and result. Take the four
+measurements in `iris` as a matrix, and ask k-means for three clusters.
 
 ``` r
-library(petalcluster)
 
-# -- Cluster with both methods --
-km  <- kmeans(rings, centers = 3, nstart = 20)
-hdb <- petal_hdbscan(rings, min_cluster_size = 15L, min_samples = 5L)
+library(shoal)
 
-# -- Side-by-side comparison --
-cluster_col <- function(labels) {
-  pal <- c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3")
-  cols <- rep("grey60", length(labels))
-  valid <- !is.na(labels) & labels > 0
-  cols[valid] <- pal[((labels[valid] - 1L) %% length(pal)) + 1L]
-  cols
-}
+x <- as.matrix(iris[, 1:4])
 
-cluster_pch <- function(labels) ifelse(is.na(labels), 4L, 1L)
+km <- shoal_kmeans(x, k = 3L)
+km
+#> 
+#> ── K-Means Clustering
+#> Parameters: k = 3, init = kmeans++, n_runs = 10, seed = 1
+#> Clusters: 3, Noise points: 0
+#> Within-cluster sum of squares: 78.851
+#> Cluster sizes: 50, 38, 62
+```
+
+The result is a list. `cluster` is the assignment, `data` is the matrix
+the model was fitted to, and `params` records the call, so a result can
+be inspected long after the code that produced it has scrolled away.
+
+``` r
+
+str(km$cluster)
+#>  int [1:150] 1 1 1 1 1 1 1 1 1 1 ...
+km$centroids
+#>      Sepal.Length Sepal.Width Petal.Length Petal.Width
+#> [1,]     5.006000    3.428000     1.462000    0.246000
+#> [2,]     6.850000    3.073684     5.742105    2.071053
+#> [3,]     5.901613    2.748387     4.393548    1.433871
+```
+
+### Choosing the number of clusters
+
+`k` is the central modelling decision, so shoal does not guess it. Fit
+across a range and compare.
+[`shoal_metrics()`](https://belian-earth.github.io/petalcluster/reference/shoal_metrics.md)
+reports the Calinski-Harabasz index (higher is better) and the
+Davies-Bouldin index (lower is better) for any partition;
+[`shoal_gmm()`](https://belian-earth.github.io/petalcluster/reference/shoal_gmm.md)
+results have a [`logLik()`](https://rdrr.io/r/stats/logLik.html) method,
+so [`BIC()`](https://rdrr.io/r/stats/AIC.html) works on them directly.
+
+``` r
+
+ks <- 2:6
+
+indices <- do.call(rbind, lapply(ks, function(k) {
+  shoal_metrics(shoal_kmeans(x, k = k))
+}))
+indices$bic <- vapply(ks, function(k) BIC(shoal_gmm(x, k = k)), numeric(1))
+
+indices
+#>     n k calinski_harabasz davies_bouldin      bic
+#> 1 150 2          513.9245      0.4042928 574.0178
+#> 2 150 3          561.6278      0.6619715 580.8594
+#> 3 150 4          530.4871      0.7757009 629.7790
+#> 4 150 5          495.5415      0.8059652 670.0892
+#> 5 150 6          473.8506      0.9141580 714.9977
+```
+
+The indices disagree, which is the honest answer for this data.
+Davies-Bouldin and BIC favour two clusters, because setosa is clearly
+separated while versicolor and virginica overlap; Calinski-Harabasz
+peaks at the three species. Choosing between those readings is a
+modelling decision, which is why shoal leaves it to you.
+
+Silhouette widths give the same verdict per observation. They need a
+distance matrix, which
+[`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md)
+computes in Rust.
+
+``` r
+
+d <- shoal_dist(x)
+
+sil <- shoal_silhouette(d, km)
+head(sil)
+#>   cluster neighbour     width
+#> 1       1         3 0.8529551
+#> 2       1         3 0.8154948
+#> 3       1         3 0.8293151
+#> 4       1         3 0.8050139
+#> 5       1         3 0.8493016
+#> 6       1         3 0.7482804
+attr(sil, "avg_width")
+#> [1] 0.552819
+```
+
+### Soft memberships
+
+A Gaussian mixture gives every observation a probability of belonging to
+each component rather than a single label. `cluster` is the row-wise
+maximum, for consistency with the other algorithms, and `posterior`
+holds the full matrix.
+
+``` r
+
+gm <- shoal_gmm(x, k = 3L)
+gm
+#> 
+#> ── Gaussian Mixture Clustering
+#> Parameters: k = 3, init = kmeans, n_runs = 1, seed = 1
+#> Clusters: 3, Noise points: 0
+#> Log-likelihood: -180.196, BIC: 580.859
+#> Mixing proportions: 0.333, 0.365, 0.301
+
+round(head(gm$posterior), 3)
+#>      [,1] [,2] [,3]
+#> [1,]    1    0    0
+#> [2,]    1    0    0
+#> [3,]    1    0    0
+#> [4,]    1    0    0
+#> [5,]    1    0    0
+#> [6,]    1    0    0
+```
+
+### Hierarchical clustering
+
+[`shoal_hclust()`](https://belian-earth.github.io/petalcluster/reference/shoal_hclust.md)
+accepts the distance matrix from
+[`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md),
+or raw data, and returns a standard `hclust` object.
+
+``` r
+
+hc <- shoal_hclust(d, method = "ward")
+hc
+#> 
+#> Call:
+#> shoal_hclust(d = d, method = "ward")
+#> 
+#> Cluster method   : ward 
+#> Distance         : euclidean 
+#> Number of objects: 150
+
+table(cutree(hc, k = 3), iris$Species)
+#>    
+#>     setosa versicolor virginica
+#>   1     50          0         0
+#>   2      0         49        15
+#>   3      0          1        35
+
+plot(hc, labels = FALSE, hang = -1, main = "Ward linkage")
+```
+
+![](reference/figures/README-hclust-1.png)
+
+The `"ward"` method here is R’s `"ward.D2"`; see
+[`?shoal_hclust`](https://belian-earth.github.io/petalcluster/reference/shoal_hclust.md)
+for how each linkage maps onto
+[`stats::hclust()`](https://rdrr.io/r/stats/hclust.html).
+
+### Predicting new observations
+
+Algorithms with a notion of a cluster centre can assign new rows. Fit on
+half of the data and predict the rest.
+
+``` r
+
+train <- x[seq(1, nrow(x), by = 2), ]
+test <- x[seq(2, nrow(x), by = 2), ]
+
+fit <- shoal_kmeans(train, k = 3L)
+table(predicted = predict(fit, test), species = iris$Species[seq(2, nrow(x), by = 2)])
+#>          species
+#> predicted setosa versicolor virginica
+#>         1      0         24         7
+#>         2      0          1        18
+#>         3     25          0         0
+```
+
+The density-based algorithms have no
+[`predict()`](https://rdrr.io/r/stats/predict.html) method, because the
+capability genuinely does not exist for them.
+
+### Clusters of arbitrary shape
+
+Classical methods assume convex, evenly sized clusters. The bundled
+`rings` data breaks that assumption: three concentric rings plus uniform
+noise. Density-based methods find the rings and label the noise, without
+being told how many groups to look for.
+
+``` r
 
 par(mfrow = c(1, 2))
-plot(rings, col = cluster_col(km$cluster), main =  "k-means (k=3)")
-plot(rings, col = cluster_col(hdb$cluster), pch = cluster_pch(hdb$cluster), main ="HDBSCAN")
+plot(shoal_kmeans(rings, k = 3L))
+plot(shoal_hdbscan(rings, min_cluster_size = 15L, min_samples = 5L))
 ```
 
 ![](reference/figures/README-rings-1.png)
 
-## Example
+Both plots come from the same
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) method: the
+shared class is what makes the comparison a one-liner. Noise points are
+drawn as grey crosses.
 
-R’s built-in `quakes` dataset contains 1,000 seismic events near Fiji.
-HDBSCAN finds spatial clusters of earthquake activity without needing to
-specify the number of groups upfront.
+HDBSCAN also returns GLOSH outlier scores, one per observation, and
+accepts `metric = "cosine"` for directional data.
 
 ``` r
-quakes_hdbscan <- petal_hdbscan(
-  quakes[, c("lat", "long", "depth", "mag")]
-)
+
+hdb <- shoal_hdbscan(rings, min_cluster_size = 15L, min_samples = 5L)
+hdb
+#> 
+#> ── HDBSCAN Clustering
+#> Metric: "euclidean"
+#> Parameters: alpha = 1, min_samples = 5, min_cluster_size = 15, boruvka = TRUE
+#> Clusters: 3, Noise points: 26
+#> GLOSH outlier scores: median 0.079, max 0.965
+
+summary(hdb$outlier_scores)
+#>    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+#>  0.0000  0.0000  0.0791  0.1783  0.3176  0.9654
+```
+
+### Plotting more than two dimensions
+
+With more than two columns,
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws a scatter
+plot matrix. Pass `xcol` and `ycol` to pick a single pair instead. Here
+R’s `quakes` data, 1,000 seismic events near Fiji, clustered on
+location, depth and magnitude, is plotted by longitude and latitude.
+
+``` r
+
+quakes_hdbscan <- shoal_hdbscan(quakes[, c("lat", "long", "depth", "mag")])
 quakes_hdbscan
 #> 
 #> ── HDBSCAN Clustering
 #> Metric: "euclidean"
-#> Parameters: alpha = 1, min_samples = 15, min_cluster_size = 15
+#> Parameters: alpha = 1, min_samples = 15, min_cluster_size = 15, boruvka = TRUE
 #> Clusters: 8, Noise points: 199
+#> GLOSH outlier scores: median 0.238, max 0.906
+
+plot(quakes_hdbscan, xcol = "long", ycol = "lat", asp = 1)
 ```
 
-Use `xcol` and `ycol` to plot a single pair of variables — here
-longitude vs latitude reveals the geographic structure of the clusters:
+![](reference/figures/README-quakes-1.png)
+
+### Embedding vectors
+
+[`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md)
+is for a different kind of input: rows that are embedding vectors, such
+as the output of a text or image model, where cosine geometry is the
+right model and the number of rows runs to thousands or millions. EVoC
+builds a nearest-neighbour graph, learns a compact node embedding from
+it and clusters that at several granularities at once. Every layer is
+returned, with a persistence score, and `layer` chooses which one
+populates `cluster`.
 
 ``` r
-plot(quakes_hdbscan, xcol = "long", ycol = "lat", asp=1)
+
+# Synthetic embeddings: eight topics of unequal size as directions in 48
+# dimensions, plus 100 scattered points that belong to none of them.
+set.seed(1)
+sizes <- c(400, 300, 250, 200, 150, 100, 60, 40)
+centres <- matrix(runif(length(sizes) * 48, -1, 1) * 0.6, nrow = length(sizes))
+emb <- rbind(
+  centres[rep(seq_along(sizes), times = sizes), ] +
+    matrix(rnorm(sum(sizes) * 48, sd = 0.1), ncol = 48),
+  matrix(runif(100 * 48, -1, 1) * 0.6, ncol = 48)
+)
+truth <- c(rep(seq_along(sizes), times = sizes), rep(NA, 100))
+
+ev <- shoal_evoc(emb, min_cluster_size = 15L)
+ev
+#> 
+#> ── EVoC Clustering
+#> Metric: "cosine"
+#> Parameters: n_neighbors = 15, noise_level = 0.5, min_cluster_size = 15,
+#> min_samples = 5, n_epochs = 50, seed = 1
+#> Clusters: 8, Noise points: 7
+#> Layers (finest first, ✔ = selected):
+#>   1: 10 clusters, 371 noise, persistence 0
+#> ✔ 2: 8 clusters, 7 noise, persistence 346.8
 ```
 
-![](reference/figures/README-example-xy-1.png)
-
-The default plot produces a scatter plot matrix of all variables:
+The finest layer over-fragments and marks hundreds of points as noise;
+the most persistent layer, selected by default, is the useful one.
+Comparing it with the truth shows every topic recovered exactly, down to
+the one with 40 members. The scattered points are the weak spot: most
+are absorbed into the nearest topic rather than flagged, since at this
+size a handful of stray directions rarely forms a density gap of its
+own.
 
 ``` r
-plot(quakes_hdbscan)
+
+table(cluster = ev$cluster, truth, useNA = "ifany")
+#>        truth
+#> cluster   1   2   3   4   5   6   7   8 <NA>
+#>    1      0   0   0 200   0   0   0   0    9
+#>    2      0 300   0   0   0   0   0   0    9
+#>    3      0   0   0   0   0   0  60   0    4
+#>    4      0   0   0   0   0   0   0  40    3
+#>    5    400   0   0   0   0   0   0   0    7
+#>    6      0   0   0   0 150   0   0   0   18
+#>    7      0   0   0   0   0 100   0   0    7
+#>    8      0   0 250   0   0   0   0   0   36
+#>    <NA>   0   0   0   0   0   0   0   0    7
 ```
 
-![](reference/figures/README-example-pairs-1.png)
+Every layer stays available on the result, so a different granularity is
+an index away rather than a refit.
+
+``` r
+
+vapply(ev$layers, function(l) length(unique(l[!is.na(l)])), integer(1))
+#> [1] 10  8
+ev$persistence
+#> [1]   0.0000 346.7937
+```
+
+The upstream default `min_cluster_size = 5` is calibrated for large
+inputs and over-fragments collections this small; raising it is the
+first thing to try.
 
 ## Performance
 
-petalcluster offers a performant alternative for density-based
-clustering in R, particularly at scale. The plot below compares
-wall-clock time against the
-[dbscan](https://cran.r-project.org/package=dbscan) R package and
-Python’s [scikit-learn](https://scikit-learn.org/), across dataset sizes
-from 500 to 50,000 points.
+Every algorithm is benchmarked against the best R alternative and, where
+one exists, the Python one, at matched settings: the same k, restarts,
+iteration cap and linkage. Timings are medians of three runs on 20
+cores, from 500 to 50,000 points, on Gaussian blobs in 2 and 10
+dimensions and, for EVoC, on embedding-like data in 48. Scripts and data
+generation are in `bench/`.
 
 ![Scaling
 benchmark](https://github.com/belian-earth/petalcluster/blob/main/bench/scaling.png?raw=true)
 
 Scaling benchmark
 
+What the panels show, at 50,000 points unless noted:
+
+- **DBSCAN**: 6 to 9 times faster than the dbscan package and 1.5 to 5
+  times faster than scikit-learn, the gap growing with dimension.
+- **HDBSCAN**: 20 times faster than scikit-learn in 2 dimensions and 2
+  times in 10. The dbscan package builds a full distance matrix and is
+  40 times slower at 20,000 points, its largest feasible size here.
+- **k-means**: level with base R’s Hartigan-Wong in 2 dimensions and 2
+  times faster in 10, with identical within-cluster sums of squares.
+  scikit-learn’s times are erratic at these sizes because its OpenMP
+  threading oversubscribes a 20-core machine.
+- **Gaussian mixture**: 20 to 170 times faster than mclust, which fits a
+  hierarchical initialisation first, and level with scikit-learn from
+  about 5,000 points, having been several times faster below that.
+- **Ward**: 1.3 to 1.4 times faster than base R and level with SciPy,
+  which edges it in two dimensions. All three run the same
+  nearest-neighbour-chain algorithm, so the differences are in computing
+  the distances that feed it. Runs stop at 20,000 points, where the
+  distance matrix alone is 1.6 GB.
+- **EVoC**: level with the reference implementation from about 20,000
+  points, and several times faster below that, where the reference’s
+  compiled kernels have not amortised. The reference here runs on 20
+  numba threads.
+
+Two things to know when the data is wide:
+
+- The spatial indexes behind DBSCAN and HDBSCAN degrade as dimension
+  grows, as they do everywhere. Above a few dozen columns, HDBSCAN’s
+  default Boruvka tree search is slower than the plain alternative, so
+  pass `boruvka = FALSE` there. See
+  [`?shoal_hdbscan`](https://belian-earth.github.io/petalcluster/reference/shoal_hdbscan.md).
+- For high-dimensional embedding vectors,
+  [`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md)
+  is the right tool and is orders of magnitude faster than HDBSCAN on
+  the raw vectors.
+
+## Threads
+
+The Rust backends run their parallel stages on a thread pool owned by
+the package: EVoC’s neighbour search, spanning tree and node embedding;
+DBSCAN’s neighbour queries; HDBSCAN’s core distances and spanning tree;
+k-means’ assignment step;
+[`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md)
+and
+[`shoal_silhouette()`](https://belian-earth.github.io/petalcluster/reference/shoal_silhouette.md).
+By default it uses every logical core. `shoal_threads(n)` resizes it for
+the session and
+[`shoal_threads()`](https://belian-earth.github.io/petalcluster/reference/shoal_threads.md)
+reports the current size; `options(shoal.threads = n)` or
+`RAYON_NUM_THREADS` set the default before the package loads. Results
+never depend on the thread count.
+
+## Development notes
+
+`devtools::load_all()` compiles the Rust code without optimisation,
+because pkgbuild sets `DEBUG` while it builds. That is fine for
+correctness but timings from a `load_all()` session are misleading, by
+an order of magnitude or more. For anything performance-related install
+the package first:
+
+``` sh
+NOT_CRAN=true R CMD INSTALL .
+```
+
+After adding or changing a `#[extendr]` function, regenerate
+`R/extendr-wrappers.R` before `devtools::document()`; with the package’s
+current rextendr configuration that is
+`rextendr:::make_wrappers("shoal", "shoal", "R/extendr-wrappers.R", use_symbols = TRUE)`
+from a `load_all()` session. Keep the Rust doc comments on those
+bindings as plain `//` comments, or roxygen will document the internal
+wrappers.
+
+The EVoC port lives in `src/rust/evoc-core/`; its parity suite against
+the Python reference is under `evoc-port/` and runs with
+`cargo test --release` from `evoc-port/parity/`.
+
 ## Acknowledgements
 
-The heavy lifting is done by the
-[petal-clustering](https://github.com/petabi/petal-clustering) crate,
-developed and maintained by [Petabi](https://github.com/petabi)
-petalcluster is simply an R interface to their work.
+The algorithms are the work of others. Density-based clustering is bound
+to [petal-clustering](https://github.com/petabi/petal-clustering) by
+[Petabi](https://github.com/petabi); hierarchical clustering to
+[kodama](https://github.com/diffeo/kodama), a Rust port of
+*fastcluster*; k-means and Gaussian mixtures to
+[linfa](https://github.com/rust-ml/linfa); and EVoC to a Rust port of
+the [reference implementation](https://github.com/TutteInstitute/evoc)
+by Leland McInnes and the Tutte Institute, validated against fixtures
+generated from it. shoal is an R interface to their work.
 
 # Package index
 
 ## Clustering
 
-Density-based clustering algorithms.
+Clustering algorithms.
 
-- [`petal_dbscan()`](https://belian-earth.github.io/petalcluster/reference/petal_dbscan.md)
+- [`shoal_kmeans()`](https://belian-earth.github.io/petalcluster/reference/shoal_kmeans.md)
+  : K-Means Clustering
+- [`shoal_gmm()`](https://belian-earth.github.io/petalcluster/reference/shoal_gmm.md)
+  : Gaussian Mixture Model
+- [`shoal_dbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_dbscan.md)
   : DBSCAN Clustering
-- [`petal_hdbscan()`](https://belian-earth.github.io/petalcluster/reference/petal_hdbscan.md)
+- [`shoal_hdbscan()`](https://belian-earth.github.io/petalcluster/reference/shoal_hdbscan.md)
   : HDBSCAN Clustering
-- [`petal_optics()`](https://belian-earth.github.io/petalcluster/reference/petal_optics.md)
-  : OPTICS Clustering
+- [`shoal_evoc()`](https://belian-earth.github.io/petalcluster/reference/shoal_evoc.md)
+  : EVoC: Embedding Vector Oriented Clustering
+- [`shoal_hclust()`](https://belian-earth.github.io/petalcluster/reference/shoal_hclust.md)
+  : Hierarchical Agglomerative Clustering
 
-## Visualisation
+## Distances
 
-Plot methods for clustering results.
+Pairwise distance matrices.
 
-- [`plot(`*`<petal_dbscan>`*`)`](https://belian-earth.github.io/petalcluster/reference/plot.petal.md)
-  [`plot(`*`<petal_hdbscan>`*`)`](https://belian-earth.github.io/petalcluster/reference/plot.petal.md)
-  [`plot(`*`<petal_optics>`*`)`](https://belian-earth.github.io/petalcluster/reference/plot.petal.md)
+- [`shoal_dist()`](https://belian-earth.github.io/petalcluster/reference/shoal_dist.md)
+  : Pairwise Distance Matrix
+
+## Validation
+
+Assessing a clustering, and choosing the number of clusters.
+
+- [`shoal_silhouette()`](https://belian-earth.github.io/petalcluster/reference/shoal_silhouette.md)
+  : Silhouette Widths
+- [`shoal_metrics()`](https://belian-earth.github.io/petalcluster/reference/shoal_metrics.md)
+  : Internal Cluster Validity Indices
+
+## Methods
+
+Shared print and plot methods, and prediction for centroid models.
+
+- [`plot(`*`<shoal_clustering>`*`)`](https://belian-earth.github.io/petalcluster/reference/plot.shoal.md)
   : Plot clustering results
+- [`shoal_palette()`](https://belian-earth.github.io/petalcluster/reference/shoal_palette.md)
+  : Default cluster palette
+- [`print(`*`<shoal_clustering>`*`)`](https://belian-earth.github.io/petalcluster/reference/print.shoal.md)
+  [`print(`*`<shoal_hdbscan>`*`)`](https://belian-earth.github.io/petalcluster/reference/print.shoal.md)
+  [`print(`*`<shoal_evoc>`*`)`](https://belian-earth.github.io/petalcluster/reference/print.shoal.md)
+  [`print(`*`<shoal_kmeans>`*`)`](https://belian-earth.github.io/petalcluster/reference/print.shoal.md)
+  [`print(`*`<shoal_gmm>`*`)`](https://belian-earth.github.io/petalcluster/reference/print.shoal.md)
+  : Print a clustering result
+- [`predict(`*`<shoal_kmeans>`*`)`](https://belian-earth.github.io/petalcluster/reference/predict.shoal_kmeans.md)
+  : Assign New Observations to Fitted Clusters
+- [`predict(`*`<shoal_gmm>`*`)`](https://belian-earth.github.io/petalcluster/reference/predict.shoal_gmm.md)
+  : Predict Mixture Membership
+- [`logLik(`*`<shoal_gmm>`*`)`](https://belian-earth.github.io/petalcluster/reference/logLik.shoal_gmm.md)
+  : Log-Likelihood of a Fitted Mixture
+
+## Configuration
+
+Runtime settings.
+
+- [`shoal_threads()`](https://belian-earth.github.io/petalcluster/reference/shoal_threads.md)
+  : Threads used by the Rust backends
 
 ## Data
 
 Bundled datasets.
 
 - [`rings`](https://belian-earth.github.io/petalcluster/reference/rings.md)
-  : rings
+  : Concentric rings with noise
+- [`newsgroups`](https://belian-earth.github.io/petalcluster/reference/newsgroups.md)
+  : Sentence embeddings of newsgroup posts
 
+# Articles
+
+### All vignettes
+
+- [Clustering embeddings with
+  EVoC](https://belian-earth.github.io/petalcluster/articles/evoc.md):
+- [Get started with
+  shoal](https://belian-earth.github.io/petalcluster/articles/shoal.md):
+- [Clustering after
+  UMAP](https://belian-earth.github.io/petalcluster/articles/umap.md):
