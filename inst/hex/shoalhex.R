@@ -33,8 +33,8 @@ hex <- paste(sprintf("%.1f,%.1f", hx, hy), collapse = " ")
 #    plus scattered strays. ---------------------------------------------------
 set.seed(7)
 shoals <- data.frame(
-  x = c(64, 176, 74, 182),
-  y = c(72, 88, 212, 204),
+  x = c(74, 166, 76, 166),
+  y = c(86, 94, 200, 196),
   heading = c(-20, 160, 30, 200),
   n = c(34, 30, 32, 30)
 )
@@ -54,8 +54,21 @@ pts <- do.call(
 strays <- data.frame(x = runif(40, 30, w - 30), y = runif(40, 40, h - 40))
 pts <- rbind(pts, strays)
 
+# Keep every fish clear of the border: drop points outside the hexagon
+# shrunk towards its centre, so a tail never crosses the edge.
+inset <- 0.9
+ix <- cx + inset * (hx - cx)
+iy <- cy + inset * (hy - cy)
+inside <- vapply(seq_len(nrow(pts)), function(i) {
+  # A point is inside a convex polygon when it lies on the same side of
+  # every edge; the hexagon's vertices run anticlockwise on screen.
+  s <- (ix[-1] - ix[-7]) * (pts$y[i] - iy[-7]) - (iy[-1] - iy[-7]) * (pts$x[i] - ix[-7])
+  all(s <= 0) || all(s >= 0)
+}, logical(1))
+pts <- pts[inside, ]
+
 # -- Cluster with the package: the colours come from the result. -------------
-fit <- shoal_hdbscan(as.matrix(pts), min_cluster_size = 12L, min_samples = 4L)
+fit <- shoal_hdbscan(as.matrix(pts), min_cluster_size = 10L, min_samples = 4L)
 stopifnot(fit$n_clusters == 4L)
 pal <- shoal_palette(fit$n_clusters)
 col <- ifelse(is.na(fit$cluster), "#8f9a95", pal[fit$cluster])
@@ -133,3 +146,4 @@ writeLines(svg, svg_path)
 rsvg::rsvg_png(svg_path, png_path, width = 5L * w, height = 5L * h)
 
 usethis::use_logo(png_path, geometry = sprintf("%dx%d", w, h))
+pkgdown::build_favicons(overwrite = TRUE)
