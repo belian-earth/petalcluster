@@ -6,12 +6,16 @@
 #
 # Run from the package root, with the package installed:
 #   Rscript inst/hex/shoalhex.R
-# Draws the sticker, then hands it to usethis::use_logo(), which places the
-# resized copy at man/figures/logo.png, and to pkgdown::build_favicons(),
-# which derives the favicon set from it. Needs rsvg, usethis and pkgdown.
+# Draws the sticker and hands it to usethis::use_logo(), which places the
+# resized copy at man/figures/logo.png. pkgdown builds the favicons from it
+# on the next local site build; after changing the sticker, refresh them
+# with pkgdown::build_favicons(overwrite = TRUE). Needs rsvg and usethis.
 # Not shipped (see .Rbuildignore).
 
 library(shoal)
+# use_logo() asks before replacing an existing logo, and under Rscript the
+# answer is silently no; this is the regenerate script, so always replace.
+options(usethis.overwrite = TRUE)
 
 sage <- "#74ac90"
 w <- 240
@@ -29,8 +33,8 @@ hex <- paste(sprintf("%.1f,%.1f", hx, hy), collapse = " ")
 #    plus scattered strays. ---------------------------------------------------
 set.seed(7)
 shoals <- data.frame(
-  x = c(70, 170, 82, 176),
-  y = c(78, 92, 205, 200),
+  x = c(64, 176, 74, 182),
+  y = c(72, 88, 212, 204),
   heading = c(-20, 160, 30, 200),
   n = c(34, 30, 32, 30)
 )
@@ -38,8 +42,8 @@ pts <- do.call(
   rbind,
   lapply(seq_len(nrow(shoals)), function(j) {
     s <- shoals[j, ]
-    along <- rnorm(s$n, 0, 16)
-    across <- rnorm(s$n, 0, 6)
+    along <- rnorm(s$n, 0, 22)
+    across <- rnorm(s$n, 0, 9)
     th <- s$heading * pi / 180
     data.frame(
       x = s$x + along * cos(th) - across * sin(th),
@@ -129,4 +133,3 @@ writeLines(svg, svg_path)
 rsvg::rsvg_png(svg_path, png_path, width = 5L * w, height = 5L * h)
 
 usethis::use_logo(png_path, geometry = sprintf("%dx%d", w, h))
-pkgdown::build_favicons(overwrite = TRUE)
