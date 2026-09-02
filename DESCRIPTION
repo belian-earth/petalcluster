@@ -1,26 +1,44 @@
-Package: petalcluster
-Title: Density-Based Clustering via Rust
+Package: shoal
+Title: High-Performance Clustering via Rust
 Version: 0.0.0.1
 Authors@R:
     person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: bindings to the Rust petal-clustering library providing
-    DBSCAN, HDBSCAN, and OPTICS density-based clustering algorithms.
+Description: A small, foundational set of clustering algorithms with Rust
+    backends, presented behind one consistent interface: k-means and Gaussian
+    mixtures via 'linfa', the density-based methods DBSCAN and HDBSCAN via
+    'petal-clustering', agglomerative hierarchical clustering via 'kodama',
+    and EVoC, direct multi-granularity clustering of embedding vectors, via
+    an in-tree port of the reference implementation. All algorithms return
+    objects sharing a common class, so printing and plotting behave
+    identically whichever algorithm produced the result.
 License: Apache License (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
-Config/rextendr/version: 0.4.2
+Config/rextendr/version: 0.5.0
 SystemRequirements: Cargo (Rust's package manager), rustc >= 1.81.0, xz
 Depends:
     R (>= 4.2)
 Imports:
     cli,
-    rlang
+    grDevices,
+    graphics,
+    parallel,
+    rlang,
+    stats,
+    utils,
+    viridisLite
 Suggests:
+    knitr,
+    mlbench,
+    rmarkdown,
     testthat (>= 3.0.0),
-    vdiffr (>= 1.0.0)
+    uwot,
+    vdiffr (>= 1.0.0),
+    withr
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 LazyData: true
 URL: https://belian-earth.github.io/petalcluster/,
     https://github.com/belian-earth/petalcluster
 BugReports: https://github.com/belian-earth/petalcluster/issues
+Config/roxygen2/version: 8.0.0

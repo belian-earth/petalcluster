@@ -1,5 +1,6 @@
 .Rproj.user
 src/rust/vendor
+src/vendor
 src/Makevars
 src/Makevars.win
 .Rhistory
@@ -10,3 +11,13 @@ src/Makevars.win
 dev.R
 .claude/
 docs
+__pycache__/
+evoc-port/parity/target
+src/rust/evoc-core/target
+src/rust/evoc-core/Cargo.lock
+inst/doc
+/doc/
+/Meta/
+
+/.quarto/
+**/*.quarto_ipynb

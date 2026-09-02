@@ -1,4 +1,4 @@
-# print.petal_dbscan returns invisibly
+# print.shoal_dbscan returns invisibly
 
     Code
       print(res)

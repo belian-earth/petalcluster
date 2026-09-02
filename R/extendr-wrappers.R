@@ -4,17 +4,35 @@
 
 #
 # This file was created with the following call:
-#   .Call("wrap__make_petalcluster_wrappers", use_symbols = TRUE, package_name = "petalcluster")
+#   .Call("wrap__make_shoal_wrappers", use_symbols = TRUE, package_name = "shoal")
 
 #' @usage NULL
-#' @useDynLib petalcluster, .registration = TRUE
+#' @useDynLib shoal, .registration = TRUE
 NULL
+
+rust_set_threads <- function(n) invisible(.Call(wrap__rust_set_threads, n))
+
+rust_get_threads <- function() .Call(wrap__rust_get_threads)
 
 rust_dbscan <- function(x, eps, min_samples, metric) .Call(wrap__rust_dbscan, x, eps, min_samples, metric)
 
 rust_hdbscan <- function(x, alpha, min_samples, min_cluster_size, metric, boruvka, partial_labels) .Call(wrap__rust_hdbscan, x, alpha, min_samples, min_cluster_size, metric, boruvka, partial_labels)
 
-rust_optics <- function(x, eps, min_samples, metric) .Call(wrap__rust_optics, x, eps, min_samples, metric)
+rust_dist <- function(x, metric, p) .Call(wrap__rust_dist, x, metric, p)
+
+rust_hclust <- function(d, n, method) .Call(wrap__rust_hclust, d, n, method)
+
+rust_kmeans <- function(x, k, init, n_runs, max_iter, tolerance, seed) .Call(wrap__rust_kmeans, x, k, init, n_runs, max_iter, tolerance, seed)
+
+rust_nearest_centroid <- function(x, centroids) .Call(wrap__rust_nearest_centroid, x, centroids)
+
+rust_gmm <- function(x, k, init, n_runs, max_iter, tolerance, reg_covariance, seed) .Call(wrap__rust_gmm, x, k, init, n_runs, max_iter, tolerance, reg_covariance, seed)
+
+rust_evoc <- function(x, n_neighbors, noise_level, min_cluster_size, min_samples, n_epochs, dim, min_similarity_threshold, max_layers, n_label_prop_iter, seed) .Call(wrap__rust_evoc, x, n_neighbors, noise_level, min_cluster_size, min_samples, n_epochs, dim, min_similarity_threshold, max_layers, n_label_prop_iter, seed)
+
+rust_silhouette <- function(d, n, cluster, k) .Call(wrap__rust_silhouette, d, n, cluster, k)
+
+rust_cluster_indices <- function(x, cluster, k) .Call(wrap__rust_cluster_indices, x, cluster, k)
 
 
 # nolint end

@@ -9,6 +9,7 @@ navbar:
     left:
     - intro
     - reference
+    - articles
     - news
     right:
     - search
@@ -20,15 +21,37 @@ navbar:
       aria-label: GitHub
 reference:
 - title: Clustering
-  desc: Density-based clustering algorithms.
+  desc: Clustering algorithms.
   contents:
-  - petal_dbscan
-  - petal_hdbscan
-  - petal_optics
-- title: Visualisation
-  desc: Plot methods for clustering results.
-  contents: plot.petal
+  - shoal_kmeans
+  - shoal_gmm
+  - shoal_dbscan
+  - shoal_hdbscan
+  - shoal_evoc
+  - shoal_hclust
+- title: Distances
+  desc: Pairwise distance matrices.
+  contents: shoal_dist
+- title: Validation
+  desc: Assessing a clustering, and choosing the number of clusters.
+  contents:
+  - shoal_silhouette
+  - shoal_metrics
+- title: Methods
+  desc: Shared print and plot methods, and prediction for centroid models.
+  contents:
+  - plot.shoal
+  - shoal_palette
+  - print.shoal
+  - predict.shoal_kmeans
+  - predict.shoal_gmm
+  - logLik.shoal_gmm
+- title: Configuration
+  desc: Runtime settings.
+  contents: shoal_threads
 - title: Data
   desc: Bundled datasets.
-  contents: rings
+  contents:
+  - rings
+  - newsgroups
 

@@ -1,8 +1,9 @@
-^petalcluster\.Rproj$
+^shoal\.Rproj$
 ^\.Rproj\.user$
 ^\.vscode$
 ^src/\.cargo$
 ^src/rust/vendor$
+^src/vendor$
 ^src/rust/target$
 ^src/Makevars$
 ^src/Makevars\.win$
@@ -16,3 +17,5 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
+^evoc-port$
+^src/rust/evoc-core/target$

@@ -9,7 +9,7 @@ install:
 	cd $(ROOT) && NOT_CRAN=true R CMD INSTALL .
 
 document:
-	cd $(ROOT) && Rscript -e 'rextendr::document()'
+	cd $(ROOT) && Rscript -e 'devtools::document()'
 
 test:
 	cd $(ROOT) && Rscript -e 'devtools::test()'
