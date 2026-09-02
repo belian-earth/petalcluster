@@ -93,7 +93,8 @@ benchmarks <- list(
   ),
   list(
     algorithm = "Ward", family = "blobs",
-    shoal = function(x) shoal_hclust(shoal_dist(x), method = "ward"),
+    # Raw input: distances go straight into the buffer kodama consumes.
+    shoal = function(x) shoal_hclust(x, method = "ward"),
     alt = function(x) stats::hclust(stats::dist(x), method = "ward.D2"),
     alt_name = "stats", max_n = Inf   # n^2 / 2 distances: 10 GB at 50k, twice over
   ),
