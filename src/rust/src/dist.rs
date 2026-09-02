@@ -1,4 +1,4 @@
-use ndarray::{Array2, ArrayView1};
+use extendr_api::prelude::Rfloat;
 use rayon::prelude::*;
 
 /// Pairwise distance metrics.
@@ -37,7 +37,8 @@ impl Metric {
         }
     }
 
-    fn compute(self, a: &ArrayView1<f64>, b: &ArrayView1<f64>) -> f64 {
+    #[inline(always)]
+    fn compute(self, a: &[f64], b: &[f64]) -> f64 {
         match self {
             Metric::Euclidean => a
                 .iter()
@@ -58,16 +59,18 @@ impl Metric {
                 .map(|(&x, &y)| (x - y).abs())
                 .sum(),
 
-            // Follows R's R_canberra: terms whose numerator and denominator are
-            // both zero are dropped, and the total is rescaled by the number of
-            // terms that survived.
+            // Follows R's R_canberra: the denominator is |x| + |y|, as the C code
+            // computes it (the R documentation writes |x + y|; the two differ on
+            // signed data), so every term lies in [0, 1].
+            // Terms whose numerator and denominator are both zero are dropped,
+            // and the total is rescaled by the number of terms that survived.
             Metric::Canberra => {
                 let nc = a.len();
                 let mut count = 0usize;
                 let mut dist = 0.0_f64;
 
                 for (&x, &y) in a.iter().zip(b.iter()) {
-                    let sum = (x + y).abs();
+                    let sum = x.abs() + y.abs();
                     let diff = (x - y).abs();
                     if sum > f64::MIN_POSITIVE || diff > f64::MIN_POSITIVE {
                         let dev = diff / sum;
@@ -163,27 +166,60 @@ impl Metric {
     }
 }
 
-/// Compute the condensed lower triangle of the pairwise distance matrix.
+/// Fill `out` with the condensed lower triangle of the pairwise distance
+/// matrix of `data` (`n x p`, row-major).
 ///
-/// The result is laid out column-major and excludes the diagonal, which is the
-/// layout R's `dist` class uses: for `n = 4` the order is
-/// (1,2) (1,3) (1,4) (2,3) (2,4) (3,4). kodama uses this same convention, so
-/// the output can be handed to it directly.
-pub fn condensed(data: &Array2<f64>, metric: Metric) -> Vec<f64> {
-    let n = data.nrows();
+/// The layout is column-major without the diagonal, which is what R's `dist`
+/// class uses: for `n = 4` the order is (1,2) (1,3) (1,4) (2,3) (2,4) (3,4),
+/// so row `i` owns the contiguous run of `n - 1 - i` entries for `j > i`.
+/// kodama uses the same convention, so the output can be handed to it
+/// directly.
+///
+/// `out` is the R vector that will be returned, so nothing is copied: the
+/// run for each row is split off as its own mutable slice and the rows are
+/// filled in parallel. `out.len()` must be `n * (n - 1) / 2`.
+pub fn condensed_into(data: &[f64], n: usize, p: usize, metric: Metric, out: &mut [Rfloat]) {
+    debug_assert_eq!(data.len(), n * p);
+    debug_assert_eq!(out.len(), n * (n - 1) / 2);
     if n < 2 {
-        return Vec::new();
+        return;
     }
 
-    // Row `i` contributes distances to every j > i, in ascending j. Emitting
-    // rows in order and flattening reproduces R's layout exactly.
-    let rows: Vec<Vec<f64>> = (0..n - 1)
-        .into_par_iter()
-        .map(|i| {
-            let a = data.row(i);
-            (i + 1..n).map(|j| metric.compute(&a, &data.row(j))).collect()
-        })
-        .collect();
+    // Disjoint per-row slices of the output, in row order.
+    let mut rows: Vec<&mut [Rfloat]> = Vec::with_capacity(n - 1);
+    let mut rest = out;
+    for i in 0..n - 1 {
+        let (head, tail) = rest.split_at_mut(n - 1 - i);
+        rows.push(head);
+        rest = tail;
+    }
 
-    rows.into_iter().flatten().collect()
+    // Dispatch on the metric once, so each variant gets its own
+    // monomorphised inner loop instead of a match per pair.
+    match metric {
+        Metric::Euclidean => fill(data, n, p, rows, |a, b| Metric::Euclidean.compute(a, b)),
+        Metric::Maximum => fill(data, n, p, rows, |a, b| Metric::Maximum.compute(a, b)),
+        Metric::Manhattan => fill(data, n, p, rows, |a, b| Metric::Manhattan.compute(a, b)),
+        Metric::Canberra => fill(data, n, p, rows, |a, b| Metric::Canberra.compute(a, b)),
+        Metric::Binary => fill(data, n, p, rows, |a, b| Metric::Binary.compute(a, b)),
+        Metric::Minkowski(q) => fill(data, n, p, rows, |a, b| Metric::Minkowski(q).compute(a, b)),
+        Metric::Cosine => fill(data, n, p, rows, |a, b| Metric::Cosine.compute(a, b)),
+        Metric::Correlation => fill(data, n, p, rows, |a, b| Metric::Correlation.compute(a, b)),
+    }
+}
+
+/// Fill each row's run of the condensed matrix, rows in parallel.
+#[inline(always)]
+fn fill<F>(data: &[f64], n: usize, p: usize, rows: Vec<&mut [Rfloat]>, f: F)
+where
+    F: Fn(&[f64], &[f64]) -> f64 + Sync,
+{
+    rows.into_par_iter().enumerate().for_each(|(i, row)| {
+        let a = &data[i * p..(i + 1) * p];
+        // Iterators rather than indexing: no bounds check per pair.
+        let others = data[(i + 1) * p..].chunks_exact(p);
+        for (slot, b) in row.iter_mut().zip(others) {
+            *slot = Rfloat::from(f(a, b));
+        }
+    });
 }

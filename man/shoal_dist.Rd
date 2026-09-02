@@ -7,8 +7,9 @@
 shoal_dist(
   x,
   metric = c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski",
-    "cosine", "correlation"),
-  p = 2
+    "cosine", "correlation", "mahalanobis"),
+  p = 2,
+  cov = NULL
 )
 }
 \arguments{
@@ -17,10 +18,14 @@ using their numeric columns (non-numeric columns are dropped). Rows
 containing missing or non-finite values are removed.}
 
 \item{metric}{Distance metric. One of \code{"euclidean"}, \code{"maximum"},
-\code{"manhattan"}, \code{"canberra"}, \code{"binary"}, \code{"minkowski"}, \code{"cosine"} or
-\code{"correlation"}.}
+\code{"manhattan"}, \code{"canberra"}, \code{"binary"}, \code{"minkowski"}, \code{"cosine"},
+\code{"correlation"} or \code{"mahalanobis"}.}
 
 \item{p}{Power for \code{metric = "minkowski"}. Ignored otherwise. Default \code{2}.}
+
+\item{cov}{Covariance matrix for \code{metric = "mahalanobis"}, \code{ncol(x)} square
+and positive definite. \code{NULL} (default) uses \code{\link[stats:cov]{stats::cov()}} of \code{x}, which
+needs more rows than columns. Ignored for other metrics.}
 }
 \value{
 An object of class \code{"dist"}: the lower triangle of the distance
@@ -36,12 +41,27 @@ Computes a pairwise distance matrix in Rust and returns a standard
 \details{
 Metrics shared with \code{\link[stats:dist]{stats::dist()}} follow its definitions exactly, including
 the way \code{"canberra"} drops and rescales degenerate terms and the way
-\code{"binary"} treats non-zero entries as "on". \code{"cosine"} matches the
+\code{"binary"} treats non-zero entries as "on". Note that \code{"canberra"} divides
+by \verb{|x| + |y|}, which is what \code{\link[stats:dist]{stats::dist()}} computes; its documentation
+writes \verb{|x + y|}, and the two differ on signed data. \code{"cosine"} matches the
 \code{metric = "cosine"} option on \code{\link[=shoal_dbscan]{shoal_dbscan()}} and \code{\link[=shoal_hdbscan]{shoal_hdbscan()}}.
+
+\code{"mahalanobis"} is the Euclidean distance after the columns have been
+decorrelated and scaled by a covariance matrix, by default the sample
+covariance of \code{x}: features on different scales or correlated with one
+another then count once rather than several times. It is computed by
+whitening \code{x} with the Cholesky factor of the covariance and taking
+Euclidean distances, so it costs the same as \code{"euclidean"} plus one
+\verb{p x p} factorisation. Pass \code{cov} to measure against a reference
+covariance rather than the sample's own.
 }
 \examples{
 d <- shoal_dist(as.matrix(iris[, 1:4]))
 d
+
+# Mahalanobis: petal length and width are strongly correlated in iris, so
+# their shared variation counts once.
+m <- shoal_dist(as.matrix(iris[, 1:4]), metric = "mahalanobis")
 
 }
 \seealso{

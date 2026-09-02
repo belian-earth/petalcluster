@@ -89,12 +89,33 @@ fn rust_hdbscan(
 }
 
 // Condensed lower-triangle distance matrix, in R's `dist` layout.
+//
+// The result vector is allocated by R up front and filled in place, so the
+// n(n-1)/2 distances are written exactly once; at 20,000 points that run is
+// 1.6 GB, and every intermediate copy of it used to cost more than the
+// arithmetic on narrow data.
 #[extendr]
 fn rust_dist(x: RMatrix<f64>, metric: &str, p: f64) -> Doubles {
-    let data = rmatrix_to_array2(x);
+    let n = x.nrows();
+    let ncol = x.ncols();
     let metric = dist::Metric::from_name(metric, p);
-    let values = threads::pool().install(|| dist::condensed(&data, metric));
-    values.into_iter().map(Rfloat::from).collect()
+
+    // Row-major copy: rows are then contiguous, where R's column-major
+    // layout would stride through memory once per feature.
+    let col_major = x.data();
+    let mut data = Vec::with_capacity(n * ncol);
+    for i in 0..n {
+        for c in 0..ncol {
+            data.push(col_major[c * n + i]);
+        }
+    }
+
+    let mut out = Doubles::new(n * (n.saturating_sub(1)) / 2);
+    {
+        let slice: &mut [Rfloat] = &mut out;
+        threads::pool().install(|| dist::condensed_into(&data, n, ncol, metric, slice));
+    }
+    out
 }
 
 // Hierarchical clustering over a condensed dissimilarity matrix.
