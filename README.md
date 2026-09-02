@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# shoal
+# shoal <a href="https://belian-earth.github.io/shoal/"><img src="man/figures/logo.png" align="right" height="200" alt="shoal website" /></a>
 
 <!-- badges: start -->
 
