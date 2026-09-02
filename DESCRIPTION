@@ -22,6 +22,7 @@ Imports:
     cli,
     grDevices,
     graphics,
+    parallel,
     rlang,
     stats,
     utils,

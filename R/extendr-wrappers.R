@@ -10,6 +10,10 @@
 #' @useDynLib shoal, .registration = TRUE
 NULL
 
+rust_set_threads <- function(n) invisible(.Call(wrap__rust_set_threads, n))
+
+rust_get_threads <- function() .Call(wrap__rust_get_threads)
+
 rust_dbscan <- function(x, eps, min_samples, metric) .Call(wrap__rust_dbscan, x, eps, min_samples, metric)
 
 rust_hdbscan <- function(x, alpha, min_samples, min_cluster_size, metric, boruvka, partial_labels) .Call(wrap__rust_hdbscan, x, alpha, min_samples, min_cluster_size, metric, boruvka, partial_labels)

@@ -39,8 +39,12 @@ fn layer_to_r(layer: &[i64]) -> Vec<Rint> {
         .collect()
 }
 
+/// Run the pipeline on an already converted row-major f32 matrix. The
+/// conversion is separate so the R object need not cross into the thread
+/// pool: `RMatrix` is not `Send`.
 pub fn run(
-    x: RMatrix<f64>,
+    data: &[f32],
+    p: usize,
     n_neighbors: usize,
     noise_level: f64,
     min_cluster_size: i64,
@@ -51,8 +55,7 @@ pub fn run(
     max_layers: usize,
     n_label_prop_iter: usize,
     seed: u64,
-) -> Result<EvocResult> {
-    let (data, _n, p) = rmatrix_to_rowmajor_f32(&x)?;
+) -> EvocResult {
     let params = EvocParams {
         n_neighbors,
         noise_level: noise_level as f32,
@@ -65,7 +68,7 @@ pub fn run(
         n_label_prop_iter,
         seed,
     };
-    Ok(evoc(&data, p, &params))
+    evoc(data, p, &params)
 }
 
 pub fn result_to_list(result: &EvocResult, n: usize) -> List {

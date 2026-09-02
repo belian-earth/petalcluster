@@ -10,6 +10,7 @@ mod gmm;
 mod hclust;
 mod kmeans;
 mod metrics;
+mod threads;
 use convert::{
     assignment_vector, partial_labels_from_list, rmatrix_to_array2, rmatrix_to_array2_linfa,
 };
@@ -20,7 +21,7 @@ fn rust_dbscan(x: RMatrix<f64>, eps: f64, min_samples: i32, metric: &str) -> Int
     let n_points = data.nrows();
     let min_samples = min_samples as usize;
 
-    let clusters = match metric {
+    let clusters = threads::pool().install(|| match metric {
         "euclidean" => {
             let mut model = Dbscan::new(eps, min_samples, Euclidean::default());
             model.fit(&data, None).0
@@ -30,7 +31,7 @@ fn rust_dbscan(x: RMatrix<f64>, eps: f64, min_samples: i32, metric: &str) -> Int
             model.fit(&data, None).0
         }
         _ => panic!("Unknown metric: {metric}"),
-    };
+    });
 
     Integers::from_values(assignment_vector(&clusters, n_points))
 }
@@ -55,7 +56,7 @@ fn rust_hdbscan(
         Nullable::Null => None,
     };
 
-    let (clusters, scores) = match metric {
+    let (clusters, scores) = threads::pool().install(|| match metric {
         "euclidean" => {
             let mut model = HDbscan {
                 alpha,
@@ -79,7 +80,7 @@ fn rust_hdbscan(
             (clusters, scores)
         }
         _ => panic!("Unknown metric: {metric}"),
-    };
+    });
 
     let assignment = assignment_vector(&clusters, n_points);
     let outlier_scores: Vec<Rfloat> = scores.iter().map(|&s| Rfloat::from(s)).collect();
@@ -87,18 +88,19 @@ fn rust_hdbscan(
     list!(cluster = assignment, outlier_scores = outlier_scores)
 }
 
-/// Condensed lower-triangle distance matrix, in R's `dist` layout.
+// Condensed lower-triangle distance matrix, in R's `dist` layout.
 #[extendr]
 fn rust_dist(x: RMatrix<f64>, metric: &str, p: f64) -> Doubles {
     let data = rmatrix_to_array2(x);
-    let values = dist::condensed(&data, dist::Metric::from_name(metric, p));
+    let metric = dist::Metric::from_name(metric, p);
+    let values = threads::pool().install(|| dist::condensed(&data, metric));
     values.into_iter().map(Rfloat::from).collect()
 }
 
-/// Hierarchical clustering over a condensed dissimilarity matrix.
-///
-/// Returns the `merge`, `height` and `order` components of an `hclust` object.
-/// `d` arrives as an owned copy because kodama destroys the matrix it is given.
+// Hierarchical clustering over a condensed dissimilarity matrix.
+//
+// Returns the `merge`, `height` and `order` components of an `hclust` object.
+// `d` arrives as an owned copy because kodama destroys the matrix it is given.
 #[extendr]
 fn rust_hclust(d: Vec<f64>, n: i32, method: &str) -> List {
     let n = n as usize;
@@ -120,9 +122,9 @@ fn rust_hclust(d: Vec<f64>, n: i32, method: &str) -> List {
     list!(merge = merge, height = out.height, order = out.order)
 }
 
-/// k-means clustering.
-///
-/// Returns the assignment vector, centroids, inertia and cluster sizes.
+// k-means clustering.
+//
+// Returns the assignment vector, centroids, inertia and cluster sizes.
 #[extendr]
 fn rust_kmeans(
     x: RMatrix<f64>,
@@ -169,7 +171,7 @@ fn rust_kmeans(
     )
 }
 
-/// Assign observations to their nearest centroid. Backs `predict()`.
+// Assign observations to their nearest centroid. Backs `predict()`.
 #[extendr]
 fn rust_nearest_centroid(x: RMatrix<f64>, centroids: RMatrix<f64>) -> Integers {
     let data = rmatrix_to_array2_linfa(x);
@@ -181,10 +183,10 @@ fn rust_nearest_centroid(x: RMatrix<f64>, centroids: RMatrix<f64>) -> Integers {
         .collect()
 }
 
-/// Gaussian mixture model.
-///
-/// Returns only the fitted parameters; responsibilities, assignments and the
-/// log-likelihood are derived from them on the R side.
+// Gaussian mixture model.
+//
+// Returns only the fitted parameters; responsibilities, assignments and the
+// log-likelihood are derived from them on the R side.
 #[extendr]
 fn rust_gmm(
     x: RMatrix<f64>,
@@ -223,12 +225,12 @@ fn rust_gmm(
     )
 }
 
-/// EVoC: direct multi-layer clustering of embedding vectors.
-///
-/// Returns every cluster layer (finest first) with membership strengths and
-/// persistence scores, plus the learned node embedding; which layer to surface
-/// as `cluster` is the R side's decision. `dim = 0` means the reference
-/// default `min(max(n_neighbors / 4, 4), 15)`.
+// EVoC: direct multi-layer clustering of embedding vectors.
+//
+// Returns every cluster layer (finest first) with membership strengths and
+// persistence scores, plus the learned node embedding; which layer to surface
+// as `cluster` is the R side's decision. `dim = 0` means the reference
+// default `min(max(n_neighbors / 4, 4), 15)`.
 #[extendr]
 fn rust_evoc(
     x: RMatrix<f64>,
@@ -244,32 +246,37 @@ fn rust_evoc(
     seed: f64,
 ) -> List {
     let n = x.nrows();
-    let result = unwrap_or_throw_error(evoc::run(
-        x,
-        n_neighbors as usize,
-        noise_level,
-        i64::from(min_cluster_size),
-        min_samples as usize,
-        n_epochs as usize,
-        if dim > 0 { Some(dim as usize) } else { None },
-        min_similarity_threshold,
-        max_layers as usize,
-        n_label_prop_iter as usize,
-        seed as u64,
-    ));
+    let (data, _, p) = unwrap_or_throw_error(evoc::rmatrix_to_rowmajor_f32(&x));
+    let result = threads::pool().install(|| {
+        evoc::run(
+            &data,
+            p,
+            n_neighbors as usize,
+            noise_level,
+            i64::from(min_cluster_size),
+            min_samples as usize,
+            n_epochs as usize,
+            if dim > 0 { Some(dim as usize) } else { None },
+            min_similarity_threshold,
+            max_layers as usize,
+            n_label_prop_iter as usize,
+            seed as u64,
+        )
+    });
     evoc::result_to_list(&result, n)
 }
 
-/// Per-observation silhouette widths from a condensed distance matrix.
-///
-/// `cluster` arrives 1-indexed from R and is returned to R the same way.
+// Per-observation silhouette widths from a condensed distance matrix.
+//
+// `cluster` arrives 1-indexed from R and is returned to R the same way.
 #[extendr]
 fn rust_silhouette(d: Vec<f64>, n: i32, cluster: Vec<i32>, k: i32) -> List {
     let n = n as usize;
     let k = k as usize;
     let zero_based: Vec<usize> = cluster.iter().map(|&c| (c - 1) as usize).collect();
 
-    let (widths, neighbours) = metrics::silhouette(&d, n, &zero_based, k);
+    let (widths, neighbours) =
+        threads::pool().install(|| metrics::silhouette(&d, n, &zero_based, k));
 
     // usize::MAX marks "no neighbouring cluster"; that becomes NA in R.
     let neighbour: Vec<Rint> = neighbours
@@ -286,7 +293,7 @@ fn rust_silhouette(d: Vec<f64>, n: i32, cluster: Vec<i32>, k: i32) -> List {
     list!(width = widths, neighbour = neighbour)
 }
 
-/// Calinski-Harabasz and Davies-Bouldin indices.
+// Calinski-Harabasz and Davies-Bouldin indices.
 #[extendr]
 fn rust_cluster_indices(x: RMatrix<f64>, cluster: Vec<i32>, k: i32) -> List {
     let data = rmatrix_to_array2(x);
@@ -310,8 +317,22 @@ fn rust_cluster_indices(x: RMatrix<f64>, cluster: Vec<i32>, k: i32) -> List {
     )
 }
 
+// Rebuild the package thread pool with `n` threads.
+#[extendr]
+fn rust_set_threads(n: i32) {
+    threads::set_threads(n.max(1) as usize);
+}
+
+// Threads in the package pool.
+#[extendr]
+fn rust_get_threads() -> i32 {
+    threads::threads() as i32
+}
+
 extendr_module! {
     mod shoal;
+    fn rust_set_threads;
+    fn rust_get_threads;
     fn rust_dbscan;
     fn rust_hdbscan;
     fn rust_dist;

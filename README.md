@@ -370,6 +370,17 @@ Two things to know when the data is wide:
   tool and is orders of magnitude faster than HDBSCAN on the raw
   vectors.
 
+## Threads
+
+The Rust backends run their parallel stages on a thread pool owned by
+the package: EVoC’s neighbour search, spanning tree and node embedding;
+DBSCAN’s neighbour queries; HDBSCAN’s core distances and spanning tree;
+`shoal_dist()` and `shoal_silhouette()`. By default it uses every
+logical core. `shoal_threads(n)` resizes it for the session and
+`shoal_threads()` reports the current size; `options(shoal.threads = n)`
+or `RAYON_NUM_THREADS` set the default before the package loads. Results
+never depend on the thread count.
+
 ## Development notes
 
 `devtools::load_all()` compiles the Rust code without optimisation,
@@ -381,6 +392,14 @@ the package first:
 ``` sh
 NOT_CRAN=true R CMD INSTALL .
 ```
+
+After adding or changing a `#[extendr]` function, regenerate
+`R/extendr-wrappers.R` before `devtools::document()`; with the package’s
+current rextendr configuration that is
+`rextendr:::make_wrappers("shoal", "shoal", "R/extendr-wrappers.R", use_symbols = TRUE)`
+from a `load_all()` session. Keep the Rust doc comments on those
+bindings as plain `//` comments, or roxygen will document the internal
+wrappers.
 
 The EVoC port lives in `src/rust/evoc-core/`; its parity suite against
 the Python reference is under `evoc-port/` and runs with

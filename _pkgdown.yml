@@ -46,6 +46,9 @@ reference:
   - predict.shoal_kmeans
   - predict.shoal_gmm
   - logLik.shoal_gmm
+- title: Configuration
+  desc: Runtime settings.
+  contents: shoal_threads
 - title: Data
   desc: Bundled datasets.
   contents:
