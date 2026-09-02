@@ -128,3 +128,52 @@ test_that("degenerate rows are reported rather than returned as NaN", {
   x <- rbind(c(0, 0, 0), c(1, 2, 3), c(2, 1, 0))
   expect_error(shoal_dist(x, metric = "cosine"), "non-finite")
 })
+
+test_that("mahalanobis matches stats::mahalanobis pair by pair", {
+  x <- as.matrix(iris[, 1:4])
+  d <- shoal_dist(x, metric = "mahalanobis")
+  expect_s3_class(d, "dist")
+  expect_identical(attr(d, "method"), "mahalanobis")
+
+  S <- stats::cov(x)
+  full <- as.matrix(d)
+  for (pair in list(c(1L, 2L), c(1L, 51L), c(51L, 101L), c(10L, 150L))) {
+    i <- pair[1]; j <- pair[2]
+    expect_equal(full[i, j], sqrt(stats::mahalanobis(x[i, ], x[j, ], S)), tolerance = 1e-10)
+  }
+
+  # With the identity as covariance it is plain Euclidean distance.
+  expect_equal(
+    as.numeric(shoal_dist(x, metric = "mahalanobis", cov = diag(4))),
+    as.numeric(shoal_dist(x)),
+    tolerance = 1e-12
+  )
+  # Rescaling a column changes nothing: the metric is scale-invariant.
+  y <- x
+  y[, 1] <- y[, 1] * 1000
+  expect_equal(as.numeric(shoal_dist(y, metric = "mahalanobis")), as.numeric(d), tolerance = 1e-8)
+})
+
+test_that("mahalanobis validates its covariance", {
+  x <- as.matrix(iris[, 1:4])
+  expect_error(shoal_dist(x[1:3, ], metric = "mahalanobis"), "more rows than columns")
+  expect_error(shoal_dist(x, metric = "mahalanobis", cov = diag(3)), "4 x 4")
+  asym <- diag(4); asym[1, 2] <- 1
+  expect_error(shoal_dist(x, metric = "mahalanobis", cov = asym), "symmetric")
+  singular <- diag(c(1, 1, 1, 0))
+  expect_error(shoal_dist(x, metric = "mahalanobis", cov = singular), "not positive definite")
+  constant <- cbind(x, 1)
+  expect_error(shoal_dist(constant, metric = "mahalanobis"), "not positive definite")
+})
+
+test_that("canberra uses |x| + |y| in the denominator, as stats::dist() does", {
+  set.seed(1)
+  x <- matrix(rnorm(60), ncol = 3)  # signed values, where the two forms differ
+  expect_equal(
+    as.double(shoal_dist(x, metric = "canberra")),
+    as.double(stats::dist(x, method = "canberra"))
+  )
+  # Opposite signs give a term of exactly 1, so a pair differing in sign on
+  # every coordinate is at the maximum.
+  expect_equal(as.double(shoal_dist(rbind(c(1, 2, 3), c(-1, -2, -3)), metric = "canberra")), 3)
+})

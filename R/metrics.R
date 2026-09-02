@@ -66,7 +66,11 @@ shoal_silhouette <- function(d, cluster) {
   }
   compact <- match(cluster, ids)
 
-  res <- rust_silhouette(as.double(d), as.integer(n), as.integer(compact), length(ids))
+  if (!is.double(d)) {
+    d <- as.double(d)
+  }
+  # Read in place on the Rust side: no copy of the distance vector.
+  res <- rust_silhouette(d, as.integer(n), as.integer(compact), length(ids))
 
   out <- data.frame(
     cluster = ids[compact],

@@ -2,32 +2,45 @@ use extendr_api::prelude::*;
 use ndarray::{Array2, ShapeBuilder};
 use std::collections::HashMap;
 
-/// Convert an extendr RMatrix<f64> to an ndarray Array2<f64>.
+/// R's column-major matrix data, transposed into a row-major buffer.
 ///
-/// R stores matrices in column-major order. We read the raw data and reshape
-/// using Fortran (column-major) layout so no transposition is needed.
+/// The algorithms walk observations, and an observation is a row: in R's
+/// layout its values sit `nrow` apart in memory, so every row access strides
+/// through the whole matrix. One `O(np)` transpose here makes rows
+/// contiguous for the `O(n^2)` or `O(n log n)` work that follows.
+fn row_major(x: &RMatrix<f64>) -> Vec<f64> {
+    let nrow = x.nrows();
+    let ncol = x.ncols();
+    let col_major = x.data();
+    let mut out = Vec::with_capacity(nrow * ncol);
+    for i in 0..nrow {
+        for c in 0..ncol {
+            out.push(col_major[c * nrow + i]);
+        }
+    }
+    out
+}
+
+/// Convert an extendr RMatrix<f64> to an ndarray Array2<f64> for
+/// petal-clustering, keeping R's column-major layout.
+///
+/// Measured: petal's tree construction runs at the same speed on this view
+/// as on a row-major copy, so the transpose that helps linfa below is not
+/// worth its cost here.
 pub fn rmatrix_to_array2(x: RMatrix<f64>) -> Array2<f64> {
     let nrow = x.nrows();
     let ncol = x.ncols();
     let data: Vec<f64> = x.data().to_vec();
-    // R is column-major (Fortran order)
     Array2::from_shape_vec((nrow, ncol).f(), data).expect("shape mismatch in matrix conversion")
 }
 
-/// Convert an extendr RMatrix<f64> to an ndarray 0.16 Array2<f64>, for linfa.
-///
-/// linfa is on ndarray 0.16 while petal-* are on 0.17, so both are in the tree
-/// and their `Array2` types are distinct. This mirrors `rmatrix_to_array2` for
-/// the older version.
+/// Convert an extendr RMatrix<f64> to a row-major ndarray 0.16 Array2<f64>
+/// for linfa, whose k-means assignment step walks rows and runs about 40%
+/// faster on contiguous ones. linfa is on ndarray 0.16 while petal-* are on
+/// 0.17, so both are in the tree and their `Array2` types are distinct.
 pub fn rmatrix_to_array2_linfa(x: RMatrix<f64>) -> ndarray_linfa::Array2<f64> {
-    let nrow = x.nrows();
-    let ncol = x.ncols();
-    let data: Vec<f64> = x.data().to_vec();
-
-    // Both ndarray versions' ShapeBuilder are in scope here, so `.f()` has to be
-    // qualified to say which one is meant.
-    let shape = <(usize, usize) as ndarray_linfa::ShapeBuilder>::f((nrow, ncol));
-    ndarray_linfa::Array2::from_shape_vec(shape, data)
+    let shape = (x.nrows(), x.ncols());
+    ndarray_linfa::Array2::from_shape_vec(shape, row_major(&x))
         .expect("shape mismatch in matrix conversion")
 }
 

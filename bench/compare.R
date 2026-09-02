@@ -11,7 +11,7 @@ cols <- c("algorithm", "family", "n", "dims", "package", "median_s")
 all_data <- rbind(read.csv(r_csv)[, cols], read.csv(py_csv)[, cols])
 all_data <- all_data[!is.na(all_data$median_s), ]
 
-algorithms <- c("DBSCAN", "HDBSCAN", "k-means", "GMM", "Ward", "EVoC")
+algorithms <- c("DBSCAN", "HDBSCAN", "k-means", "GMM", "Ward", "Distances", "EVoC")
 panels <- unique(all_data[, c("algorithm", "dims")])
 panels <- panels[order(match(panels$algorithm, algorithms), panels$dims), ]
 

@@ -1,5 +1,5 @@
 use extendr_api::prelude::*;
-use extendr_api::unwrap_or_throw_error;
+use extendr_api::{throw_r_error, unwrap_or_throw_error};
 use petal_clustering::{Dbscan, Fit, HDbscan};
 use petal_neighbors::distance::{Cosine, Euclidean};
 
@@ -89,29 +89,60 @@ fn rust_hdbscan(
 }
 
 // Condensed lower-triangle distance matrix, in R's `dist` layout.
+//
+// The result vector is allocated by R up front and filled in place, so the
+// n(n-1)/2 distances are written exactly once; at 20,000 points that run is
+// 1.6 GB, and every intermediate copy of it used to cost more than the
+// arithmetic on narrow data.
+//
+// Returns the values and whether they are all finite, so the R side need not
+// scan the result again.
 #[extendr]
-fn rust_dist(x: RMatrix<f64>, metric: &str, p: f64) -> Doubles {
-    let data = rmatrix_to_array2(x);
+fn rust_dist(x: RMatrix<f64>, metric: &str, p: f64) -> List {
+    let n = x.nrows();
+    let ncol = x.ncols();
     let metric = dist::Metric::from_name(metric, p);
-    let values = threads::pool().install(|| dist::condensed(&data, metric));
-    values.into_iter().map(Rfloat::from).collect()
+
+    // Row-major copy: rows are then contiguous, where R's column-major
+    // layout would stride through memory once per feature.
+    let col_major = x.data();
+    let mut data = Vec::with_capacity(n * ncol);
+    for i in 0..n {
+        for c in 0..ncol {
+            data.push(col_major[c * n + i]);
+        }
+    }
+
+    let mut out = Doubles::new(n * (n.saturating_sub(1)) / 2);
+    let finite = {
+        let slice: &mut [Rfloat] = &mut out;
+        threads::pool().install(|| dist::condensed_into(&data, n, ncol, metric, slice))
+    };
+    list!(values = out, finite = finite)
 }
 
 // Hierarchical clustering over a condensed dissimilarity matrix.
 //
 // Returns the `merge`, `height` and `order` components of an `hclust` object.
-// `d` arrives as an owned copy because kodama destroys the matrix it is given.
+// `d` is the R vector itself (a `dist`, attributes and all); it is copied
+// exactly once here, because kodama destroys the matrix it is given.
 #[extendr]
-fn rust_hclust(d: Vec<f64>, n: i32, method: &str) -> List {
+fn rust_hclust(d: Robj, n: i32, method: &str) -> List {
     let n = n as usize;
+    let d: Vec<f64> = d
+        .as_real_slice()
+        .expect("`d` must be a double vector")
+        .to_vec();
 
     let expected = n * (n - 1) / 2;
     if d.len() != expected {
         panic!("expected {expected} dissimilarities for {n} observations, got {}", d.len());
     }
-    // kodama panics on NaN; the R side rejects these first, so reaching here is a bug.
-    if d.iter().any(|v| v.is_nan()) {
-        panic!("dissimilarity matrix contains NaN");
+    // kodama panics on NaN and misbehaves on Inf. The R side screens NA
+    // cheaply; the full finiteness scan lives here, where it is one pass over
+    // memory that is about to be read anyway.
+    if d.iter().any(|v| !v.is_finite()) {
+        throw_r_error("`d` must not contain missing or non-finite values.");
     }
 
     let out = hclust::hclust(d, n, hclust::method_from_name(method));
@@ -280,15 +311,18 @@ fn rust_evoc(
 
 // Per-observation silhouette widths from a condensed distance matrix.
 //
-// `cluster` arrives 1-indexed from R and is returned to R the same way.
+// `d` is read in place from the R vector (a `dist`): at 20,000 observations
+// it is 1.6 GB, and it is only ever read. `cluster` arrives 1-indexed from R
+// and is returned to R the same way.
 #[extendr]
-fn rust_silhouette(d: Vec<f64>, n: i32, cluster: Vec<i32>, k: i32) -> List {
+fn rust_silhouette(d: Robj, n: i32, cluster: Vec<i32>, k: i32) -> List {
     let n = n as usize;
     let k = k as usize;
+    let d: &[f64] = d.as_real_slice().expect("`d` must be a double vector");
     let zero_based: Vec<usize> = cluster.iter().map(|&c| (c - 1) as usize).collect();
 
     let (widths, neighbours) =
-        threads::pool().install(|| metrics::silhouette(&d, n, &zero_based, k));
+        threads::pool().install(|| metrics::silhouette(d, n, &zero_based, k));
 
     // usize::MAX marks "no neighbouring cluster"; that becomes NA in R.
     let neighbour: Vec<Rint> = neighbours

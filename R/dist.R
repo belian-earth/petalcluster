@@ -7,16 +7,30 @@
 #'
 #' Metrics shared with [stats::dist()] follow its definitions exactly, including
 #' the way `"canberra"` drops and rescales degenerate terms and the way
-#' `"binary"` treats non-zero entries as "on". `"cosine"` matches the
+#' `"binary"` treats non-zero entries as "on". Note that `"canberra"` divides
+#' by `|x| + |y|`, which is what [stats::dist()] computes; its documentation
+#' writes `|x + y|`, and the two differ on signed data. `"cosine"` matches the
 #' `metric = "cosine"` option on [shoal_dbscan()] and [shoal_hdbscan()].
+#'
+#' `"mahalanobis"` is the Euclidean distance after the columns have been
+#' decorrelated and scaled by a covariance matrix, by default the sample
+#' covariance of `x`: features on different scales or correlated with one
+#' another then count once rather than several times. It is computed by
+#' whitening `x` with the Cholesky factor of the covariance and taking
+#' Euclidean distances, so it costs the same as `"euclidean"` plus one
+#' `p x p` factorisation. Pass `cov` to measure against a reference
+#' covariance rather than the sample's own.
 #'
 #' @param x A numeric matrix or data frame. Data frames are coerced to a matrix
 #'   using their numeric columns (non-numeric columns are dropped). Rows
 #'   containing missing or non-finite values are removed.
 #' @param metric Distance metric. One of `"euclidean"`, `"maximum"`,
-#'   `"manhattan"`, `"canberra"`, `"binary"`, `"minkowski"`, `"cosine"` or
-#'   `"correlation"`.
+#'   `"manhattan"`, `"canberra"`, `"binary"`, `"minkowski"`, `"cosine"`,
+#'   `"correlation"` or `"mahalanobis"`.
 #' @param p Power for `metric = "minkowski"`. Ignored otherwise. Default `2`.
+#' @param cov Covariance matrix for `metric = "mahalanobis"`, `ncol(x)` square
+#'   and positive definite. `NULL` (default) uses [stats::cov()] of `x`, which
+#'   needs more rows than columns. Ignored for other metrics.
 #'
 #' @returns An object of class `"dist"`: the lower triangle of the distance
 #'   matrix stored column-major, with `Size`, `Labels`, `Diag`, `Upper`,
@@ -28,13 +42,18 @@
 #' d <- shoal_dist(as.matrix(iris[, 1:4]))
 #' d
 #'
+#' # Mahalanobis: petal length and width are strongly correlated in iris, so
+#' # their shared variation counts once.
+#' m <- shoal_dist(as.matrix(iris[, 1:4]), metric = "mahalanobis")
+#'
 #' @export
 shoal_dist <- function(x,
                        metric = c(
                          "euclidean", "maximum", "manhattan", "canberra",
-                         "binary", "minkowski", "cosine", "correlation"
+                         "binary", "minkowski", "cosine", "correlation",
+                         "mahalanobis"
                        ),
-                       p = 2) {
+                       p = 2, cov = NULL) {
   x <- check_numeric_matrix(x)
   metric <- rlang::arg_match(metric)
   check_positive_number(p)
@@ -43,9 +62,14 @@ shoal_dist <- function(x,
     cli::cli_abort("{.arg x} must have at least 2 rows to compute distances.")
   }
 
-  values <- rust_dist(x, metric, as.double(p))
+  res <- if (identical(metric, "mahalanobis")) {
+    rust_dist(whiten(x, cov), "euclidean", 2)
+  } else {
+    rust_dist(x, metric, as.double(p))
+  }
 
-  if (anyNA(values) || any(!is.finite(values))) {
+  # Checked as the distances were written: no second pass over the result.
+  if (!res$finite) {
     cli::cli_abort(c(
       "Distance computation produced non-finite values.",
       "i" = "{.val {metric}} is undefined for zero-variance or all-zero rows."
@@ -53,12 +77,55 @@ shoal_dist <- function(x,
   }
 
   new_dist(
-    values,
+    res$values,
     n = nrow(x),
     labels = rownames(x),
     method = metric,
     call = match.call()
   )
+}
+
+#' Whiten `x` so that Euclidean distances become Mahalanobis distances
+#'
+#' With `S = R'R` from the Cholesky factor `R`, the Mahalanobis distance
+#' `sqrt((u - v)' S^-1 (u - v))` equals the Euclidean distance between
+#' `R^-T u` and `R^-T v`. Transforming every row once is `O(n p^2)`, against
+#' the `O(n^2 p)` of the distances themselves.
+#'
+#' @noRd
+whiten <- function(x, cov, call = rlang::caller_env()) {
+  p <- ncol(x)
+  if (is.null(cov)) {
+    if (nrow(x) <= p) {
+      cli::cli_abort(c(
+        "{.arg x} needs more rows than columns for its sample covariance to be invertible.",
+        "i" = "It has {nrow(x)} row{?s} and {p} column{?s}. Supply {.arg cov} instead."
+      ), call = call)
+    }
+    cov <- stats::cov(x)
+  } else {
+    if (!is.matrix(cov) || !is.numeric(cov) || !identical(dim(cov), c(p, p))) {
+      cli::cli_abort(
+        "{.arg cov} must be a {p} x {p} numeric matrix to match the columns of {.arg x}.",
+        call = call
+      )
+    }
+    if (!isSymmetric(unname(cov))) {
+      cli::cli_abort("{.arg cov} must be symmetric.", call = call)
+    }
+  }
+
+  ch <- tryCatch(chol(cov), error = function(e) {
+    cli::cli_abort(c(
+      "The covariance matrix is not positive definite.",
+      "i" = "A constant or collinear column makes it singular; drop it, or supply a regularised {.arg cov}."
+    ), call = call)
+  })
+
+  # Row i becomes R^-T x_i; solving against the transpose avoids an inverse.
+  z <- t(backsolve(ch, t(x), transpose = TRUE))
+  dimnames(z) <- dimnames(x)
+  z
 }
 
 #' Construct a `dist` object

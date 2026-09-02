@@ -32,6 +32,7 @@ from pathlib import Path
 
 import numpy as np
 from scipy.cluster.hierarchy import linkage
+from scipy.spatial.distance import pdist
 from sklearn.cluster import DBSCAN, HDBSCAN, KMeans
 from sklearn.mixture import GaussianMixture
 
@@ -78,6 +79,8 @@ BENCHMARKS = [
                                max_iter=100).fit_predict(x), np.inf),
     ("Ward", "blobs", "scipy",
      lambda x: linkage(x, method="ward"), 20000),
+    ("Distances", "blobs", "scipy",
+     lambda x: pdist(x), 20000),
     ("EVoC", "emb", "evoc", evoc_fit, np.inf),
 ]
 
