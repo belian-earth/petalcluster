@@ -1,0 +1,244 @@
+---
+title: "Clustering embeddings with EVoC"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Clustering embeddings with EVoC}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5,
+  dpi = 96
+)
+```
+
+Embedding models turn text, images and other objects into vectors whose
+directions carry meaning: two posts about the same thing point the same way.
+Clustering such vectors is how topics are discovered in a corpus, and it is
+what `shoal_evoc()` is for. This vignette runs it on real sentence embeddings,
+looks at what it returns, and compares it with the other ways of clustering
+the same vectors.
+
+```{r setup, message = FALSE}
+library(shoal)
+```
+
+## The data
+
+`newsgroups` holds 2,400 posts from eight groups of the 20 Newsgroups corpus,
+embedded with a sentence-transformer and reduced to 64 dimensions (see
+`?newsgroups` for how). The group each post came from is kept for scoring,
+along with the opening of each post for reading.
+
+```{r data}
+str(newsgroups)
+table(newsgroups$group)
+```
+
+Scores below are the adjusted Rand index (ARI) against the group labels: 1 for
+a perfect match, 0 for chance. Noise counts as its own class.
+
+```{r ari}
+ari <- function(a, b) {
+  a <- ifelse(is.na(a), -1L, as.integer(factor(a)))
+  b <- ifelse(is.na(b), -1L, as.integer(factor(b)))
+  tab <- table(a, b)
+  comb2 <- function(x) x * (x - 1) / 2
+  sum_ij <- sum(comb2(tab))
+  sum_a <- sum(comb2(rowSums(tab)))
+  sum_b <- sum(comb2(colSums(tab)))
+  expected <- sum_a * sum_b / comb2(sum(tab))
+  (sum_ij - expected) / ((sum_a + sum_b) / 2 - expected)
+}
+```
+
+## One call
+
+EVoC needs no number of clusters and no distance threshold. It builds a
+nearest-neighbour graph under cosine distance, learns a compact node
+embedding of that graph, and density-clusters the embedding at every
+granularity it can find. `min_cluster_size` is the one parameter worth
+setting up front: the upstream default of 5 suits corpora of hundreds of
+thousands of documents, and over-fragments a few thousand.
+
+```{r fit}
+x <- newsgroups$embedding
+timing <- system.time(ev <- shoal_evoc(x, min_cluster_size = 30L))
+ev
+timing[["elapsed"]]
+```
+
+```{r fit-table}
+table(cluster = ev$cluster, group = newsgroups$group, useNA = "ifany")
+ari(newsgroups$group, ev$cluster)
+```
+
+Seven of the eight groups come back as a cluster each, with a tenth of the
+corpus set aside as noise. The eighth, `talk.politics.mideast`, comes back as
+two clusters. The labels say that is an error; the posts say otherwise. The
+opening lines of a few from each show that the group holds two separate
+arguments, one about Turkey, Armenia and Greece and one about Israel and the
+Holocaust, and EVoC has found a distinction the labels do not have.
+
+```{r split}
+mideast <- table(ev$cluster[newsgroups$group == "talk.politics.mideast"])
+halves <- as.integer(names(sort(mideast, decreasing = TRUE)[1:2]))
+
+set.seed(2)
+for (h in halves) {
+  members <- which(!is.na(ev$cluster) & ev$cluster == h)
+  cat("Cluster", h, "\n")
+  cat(paste0("  ", substr(newsgroups$snippet[sample(members, 4)], 1, 90)), sep = "\n")
+}
+```
+
+## Every layer, not one
+
+A corpus rarely has one right granularity. EVoC therefore returns every
+stable layer of the cluster hierarchy, finest first, and only chooses which
+one fills `cluster`: by default the most persistent, matching the reference
+implementation. The others are on the result.
+
+```{r layers}
+layer_summary <- data.frame(
+  layer = seq_along(ev$layers),
+  clusters = vapply(ev$layers, function(l) length(unique(l[!is.na(l)])), integer(1)),
+  noise = vapply(ev$layers, function(l) sum(is.na(l)), integer(1)),
+  persistence = round(ev$persistence, 1),
+  ari = round(vapply(ev$layers, function(l) ari(newsgroups$group, l), numeric(1)), 3)
+)
+layer_summary
+```
+
+Choosing a different layer afterwards is an index, not a refit:
+
+```{r layer-pick}
+finest <- ev$layers[[1]]
+table(finest, newsgroups$group, useNA = "ifany")[1:6, ]
+```
+
+## Seeing the clusters
+
+The node embedding EVoC learned is on the result too. It has four dimensions
+here, and the clustering used all of them, so the first two give a rough
+picture rather than an exact one: clusters that overlap in this view are
+separated in the other two.
+
+```{r embedding-plot}
+k <- ev$n_clusters
+plot(ev$embedding[, 1:2],
+     col = ifelse(is.na(ev$cluster), "grey60", shoal_palette(k)[ev$cluster]),
+     pch = ifelse(is.na(ev$cluster), 4, 19), cex = 0.5,
+     xlab = "Embedding 1", ylab = "Embedding 2",
+     main = "EVoC node embedding, coloured by cluster")
+```
+
+Each observation also has a membership strength for its cluster in
+`strengths`: 1 for a point that joined its cluster at full density, lower
+for one that only attached as the density threshold fell. Two thirds of
+members score exactly 1, so the strength is a flag for the doubtful rather
+than a ranking of the core. The weakest members of the `rec.autos` cluster
+are a mixed bag: a post from another group, and posts only loosely about
+cars.
+
+```{r strengths}
+s <- ev$strengths[[ev$layer]]
+mean(s[!is.na(ev$cluster)] < 1)
+
+autos <- as.integer(names(which.max(table(ev$cluster[newsgroups$group == "rec.autos"]))))
+members <- which(!is.na(ev$cluster) & ev$cluster == autos)
+weakest <- members[order(s[members])][1:5]
+data.frame(strength = round(s[weakest], 2), group = newsgroups$group[weakest],
+           snippet = substr(newsgroups$snippet[weakest], 1, 55))
+```
+
+## Against the alternatives
+
+Three other ways to cluster the same vectors, with what each needs from you.
+
+```{r alternatives, message = FALSE}
+library(uwot)
+
+score <- function(name, cluster, seconds) {
+  data.frame(method = name,
+             clusters = length(unique(cluster[!is.na(cluster)])),
+             noise = sum(is.na(cluster)),
+             ari = round(ari(newsgroups$group, cluster), 3),
+             seconds = round(seconds, 2))
+}
+
+# HDBSCAN straight on the vectors, with the cosine metric.
+t_hdb <- system.time(
+  hdb <- shoal_hdbscan(x, min_cluster_size = 15L, min_samples = 10L,
+                       metric = "cosine", boruvka = FALSE)
+)
+
+# UMAP to two dimensions under cosine distance, then HDBSCAN.
+set.seed(42)
+t_umap <- system.time({
+  u <- umap(x, n_neighbors = 30, min_dist = 0, metric = "cosine", n_threads = 2)
+  uh <- shoal_hdbscan(u, min_cluster_size = 40L, min_samples = 10L)
+})
+
+# k-means, told the right number of groups.
+t_km <- system.time(km <- shoal_kmeans(x, k = 8L))
+
+rbind(
+  score("EVoC", ev$cluster, timing[["elapsed"]]),
+  score("HDBSCAN on the vectors", hdb$cluster, t_hdb[["elapsed"]]),
+  score("UMAP then HDBSCAN", uh$cluster, t_umap[["elapsed"]]),
+  score("k-means, k = 8", km$cluster, t_km[["elapsed"]])
+)
+```
+
+HDBSCAN on the raw vectors is the case EVoC exists to fix: in 64 dimensions
+there is no density contrast to find, so most of the corpus is noise, and the
+spatial index is slow getting there. UMAP followed by HDBSCAN is the usual
+remedy and works, at the cost of two stages, two sets of parameters, a
+stochastic layout, and tens of times the running time. EVoC does the same
+job in one call, and here does it a little better.
+
+k-means scores well when told there are eight groups. It always will on a
+corpus with round, evenly sized topics, and it has no way of saying when
+that is not so: it cannot report noise, cannot find eleven topics when asked
+for eight, and offers no layers. With a known `k` and a clean corpus it is
+hard to beat; discovering the structure of an unknown one is the case for
+EVoC.
+
+## Stability
+
+EVoC is stochastic, so `seed` matters, and as with any such method the
+question is whether another seed finds the same clusters.
+
+```{r seeds}
+runs <- lapply(1:3, function(seed) shoal_evoc(x, min_cluster_size = 30L, seed = seed)$cluster)
+round(c(seeds_1_2 = ari(runs[[1]], runs[[2]]),
+        seeds_1_3 = ari(runs[[1]], runs[[3]]),
+        seeds_2_3 = ari(runs[[2]], runs[[3]])), 3)
+```
+
+The runs agree on most of the partition. Where they differ is at the edges:
+which doubtful posts are noise, and whether a split like the one in
+`talk.politics.mideast` is made. On a corpus of a few thousand posts that
+is the expected amount of variation; it shrinks as the corpus grows, which
+is the regime EVoC is built for. The same seed, data and parameters always
+give bitwise-identical results, whatever the thread count.
+
+## Practical notes
+
+- Input must be embedding vectors: rows whose direction carries the meaning.
+  EVoC normalises them and works in cosine geometry throughout. Tabular
+  measurements are not that; use the other algorithms, and see
+  `vignette("umap")` for wide tabular data.
+- Raise `min_cluster_size` first. It sets the finest granularity, and the
+  default of 5 is calibrated for corpora far larger than most.
+- Read the layers before trusting the selected one. Persistence is a good
+  heuristic, not a law; on nested topic structure the finest layer is often
+  the useful one.
+- Expect some noise. Posts that are short, off-topic or between topics land
+  in no cluster, which is information rather than failure.

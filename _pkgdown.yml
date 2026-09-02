@@ -48,5 +48,7 @@ reference:
   - logLik.shoal_gmm
 - title: Data
   desc: Bundled datasets.
-  contents: rings
+  contents:
+  - rings
+  - newsgroups
 

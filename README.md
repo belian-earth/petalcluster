@@ -45,9 +45,11 @@ pak::pak("belian-earth/petalcluster")
 Requires a working [Rust toolchain](https://rustup.rs/) (rustc \>=
 1.81).
 
-Two vignettes go further than this page: `vignette("shoal")` introduces
-each algorithm in turn, and `vignette("umap")` shows what embedding wide
-data with UMAP does to each of them.
+Three vignettes go further than this page: `vignette("shoal")`
+introduces each algorithm in turn with a picture of what it finds,
+`vignette("umap")` shows what embedding wide data with UMAP does to each
+of them, and `vignette("evoc")` clusters real sentence embeddings with
+EVoC and compares it with the alternatives.
 
 ## A worked example
 
