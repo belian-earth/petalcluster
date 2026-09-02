@@ -62,13 +62,14 @@ shoal_dist <- function(x,
     cli::cli_abort("{.arg x} must have at least 2 rows to compute distances.")
   }
 
-  if (identical(metric, "mahalanobis")) {
-    values <- rust_dist(whiten(x, cov), "euclidean", 2)
+  res <- if (identical(metric, "mahalanobis")) {
+    rust_dist(whiten(x, cov), "euclidean", 2)
   } else {
-    values <- rust_dist(x, metric, as.double(p))
+    rust_dist(x, metric, as.double(p))
   }
 
-  if (anyNA(values) || any(!is.finite(values))) {
+  # Checked as the distances were written: no second pass over the result.
+  if (!res$finite) {
     cli::cli_abort(c(
       "Distance computation produced non-finite values.",
       "i" = "{.val {metric}} is undefined for zero-variance or all-zero rows."
@@ -76,7 +77,7 @@ shoal_dist <- function(x,
   }
 
   new_dist(
-    values,
+    res$values,
     n = nrow(x),
     labels = rownames(x),
     method = metric,

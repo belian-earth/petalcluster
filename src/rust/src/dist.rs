@@ -178,11 +178,15 @@ impl Metric {
 /// `out` is the R vector that will be returned, so nothing is copied: the
 /// run for each row is split off as its own mutable slice and the rows are
 /// filled in parallel. `out.len()` must be `n * (n - 1) / 2`.
-pub fn condensed_into(data: &[f64], n: usize, p: usize, metric: Metric, out: &mut [Rfloat]) {
+///
+/// Returns whether every distance is finite. Each row is checked as soon as
+/// it is written, while it is still in cache; a separate pass over the
+/// result on the R side costs more than the distances do on narrow data.
+pub fn condensed_into(data: &[f64], n: usize, p: usize, metric: Metric, out: &mut [Rfloat]) -> bool {
     debug_assert_eq!(data.len(), n * p);
     debug_assert_eq!(out.len(), n * (n - 1) / 2);
     if n < 2 {
-        return;
+        return true;
     }
 
     // Disjoint per-row slices of the output, in row order.
@@ -208,18 +212,26 @@ pub fn condensed_into(data: &[f64], n: usize, p: usize, metric: Metric, out: &mu
     }
 }
 
-/// Fill each row's run of the condensed matrix, rows in parallel.
+/// Fill each row's run of the condensed matrix, rows in parallel, and report
+/// whether every value written is finite.
 #[inline(always)]
-fn fill<F>(data: &[f64], n: usize, p: usize, rows: Vec<&mut [Rfloat]>, f: F)
+fn fill<F>(data: &[f64], n: usize, p: usize, rows: Vec<&mut [Rfloat]>, f: F) -> bool
 where
     F: Fn(&[f64], &[f64]) -> f64 + Sync,
 {
-    rows.into_par_iter().enumerate().for_each(|(i, row)| {
-        let a = &data[i * p..(i + 1) * p];
-        // Iterators rather than indexing: no bounds check per pair.
-        let others = data[(i + 1) * p..].chunks_exact(p);
-        for (slot, b) in row.iter_mut().zip(others) {
-            *slot = Rfloat::from(f(a, b));
-        }
-    });
+    rows.into_par_iter()
+        .enumerate()
+        .map(|(i, row)| {
+            let a = &data[i * p..(i + 1) * p];
+            // Iterators rather than indexing: no bounds check per pair.
+            let others = data[(i + 1) * p..].chunks_exact(p);
+            let mut finite = true;
+            for (slot, b) in row.iter_mut().zip(others) {
+                let v = f(a, b);
+                finite &= v.is_finite();
+                *slot = Rfloat::from(v);
+            }
+            finite
+        })
+        .reduce(|| true, |x, y| x && y)
 }

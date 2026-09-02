@@ -1,5 +1,5 @@
 use extendr_api::prelude::*;
-use extendr_api::unwrap_or_throw_error;
+use extendr_api::{throw_r_error, unwrap_or_throw_error};
 use petal_clustering::{Dbscan, Fit, HDbscan};
 use petal_neighbors::distance::{Cosine, Euclidean};
 
@@ -94,8 +94,11 @@ fn rust_hdbscan(
 // n(n-1)/2 distances are written exactly once; at 20,000 points that run is
 // 1.6 GB, and every intermediate copy of it used to cost more than the
 // arithmetic on narrow data.
+//
+// Returns the values and whether they are all finite, so the R side need not
+// scan the result again.
 #[extendr]
-fn rust_dist(x: RMatrix<f64>, metric: &str, p: f64) -> Doubles {
+fn rust_dist(x: RMatrix<f64>, metric: &str, p: f64) -> List {
     let n = x.nrows();
     let ncol = x.ncols();
     let metric = dist::Metric::from_name(metric, p);
@@ -111,11 +114,11 @@ fn rust_dist(x: RMatrix<f64>, metric: &str, p: f64) -> Doubles {
     }
 
     let mut out = Doubles::new(n * (n.saturating_sub(1)) / 2);
-    {
+    let finite = {
         let slice: &mut [Rfloat] = &mut out;
-        threads::pool().install(|| dist::condensed_into(&data, n, ncol, metric, slice));
-    }
-    out
+        threads::pool().install(|| dist::condensed_into(&data, n, ncol, metric, slice))
+    };
+    list!(values = out, finite = finite)
 }
 
 // Hierarchical clustering over a condensed dissimilarity matrix.
@@ -135,9 +138,11 @@ fn rust_hclust(d: Robj, n: i32, method: &str) -> List {
     if d.len() != expected {
         panic!("expected {expected} dissimilarities for {n} observations, got {}", d.len());
     }
-    // kodama panics on NaN; the R side rejects these first, so reaching here is a bug.
-    if d.iter().any(|v| v.is_nan()) {
-        panic!("dissimilarity matrix contains NaN");
+    // kodama panics on NaN and misbehaves on Inf. The R side screens NA
+    // cheaply; the full finiteness scan lives here, where it is one pass over
+    // memory that is about to be read anyway.
+    if d.iter().any(|v| !v.is_finite()) {
+        throw_r_error("`d` must not contain missing or non-finite values.");
     }
 
     let out = hclust::hclust(d, n, hclust::method_from_name(method));

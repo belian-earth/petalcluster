@@ -68,8 +68,10 @@ shoal_hclust <- function(d,
       "{.arg d} has {length(d)} dissimilarit{?y/ies}, expected {expected} for {n} observations."
     )
   }
-  # kodama panics on NaN, so reject non-finite input here with a usable message.
-  if (anyNA(d) || any(!is.finite(d))) {
+  # NA is screened here, cheaply; Inf is caught on the Rust side in the same
+  # pass that copies `d`, with the same message. A separate is.finite() pass
+  # would allocate a logical vector as long as `d`.
+  if (anyNA(d)) {
     cli::cli_abort("{.arg d} must not contain missing or non-finite values.")
   }
   if (!is.double(d)) {
