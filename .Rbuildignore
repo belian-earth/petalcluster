@@ -20,3 +20,4 @@
 ^evoc-port$
 ^src/rust/evoc-core/target$
 ^inst/hex/shoalhex\.R$
+^TODO\.md$
