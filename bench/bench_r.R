@@ -98,6 +98,13 @@ benchmarks <- list(
     max_n_shoal = 20000L
   ),
   list(
+    algorithm = "Distances", family = "blobs",
+    shoal = function(x) shoal_dist(x),
+    alt = function(x) stats::dist(x),
+    alt_name = "stats", max_n = 20000L,   # n^2 / 2 doubles: 1.6 GB at 20k
+    max_n_shoal = 20000L
+  ),
+  list(
     algorithm = "EVoC", family = "emb",
     shoal = function(x) shoal_evoc(x, min_cluster_size = 15L),
     alt = NULL, alt_name = NULL, max_n = 0L  # no R alternative
