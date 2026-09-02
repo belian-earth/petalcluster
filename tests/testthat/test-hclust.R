@@ -144,4 +144,7 @@ test_that("raw data takes the fused path and matches the two-step result", {
   # A data frame is accepted, and inversion warnings still surface.
   expect_s3_class(shoal_hclust(iris[, 1:4]), "hclust")
   expect_warning(shoal_hclust(x[1:60, ], method = "centroid"), "inversions")
+
+  # One row has no pairs to cluster; refused before any distance is computed.
+  expect_error(shoal_hclust(x[1, , drop = FALSE]), "at least 2 rows")
 })
