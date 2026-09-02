@@ -121,10 +121,15 @@ fn rust_dist(x: RMatrix<f64>, metric: &str, p: f64) -> Doubles {
 // Hierarchical clustering over a condensed dissimilarity matrix.
 //
 // Returns the `merge`, `height` and `order` components of an `hclust` object.
-// `d` arrives as an owned copy because kodama destroys the matrix it is given.
+// `d` is the R vector itself (a `dist`, attributes and all); it is copied
+// exactly once here, because kodama destroys the matrix it is given.
 #[extendr]
-fn rust_hclust(d: Vec<f64>, n: i32, method: &str) -> List {
+fn rust_hclust(d: Robj, n: i32, method: &str) -> List {
     let n = n as usize;
+    let d: Vec<f64> = d
+        .as_real_slice()
+        .expect("`d` must be a double vector")
+        .to_vec();
 
     let expected = n * (n - 1) / 2;
     if d.len() != expected {
@@ -301,15 +306,18 @@ fn rust_evoc(
 
 // Per-observation silhouette widths from a condensed distance matrix.
 //
-// `cluster` arrives 1-indexed from R and is returned to R the same way.
+// `d` is read in place from the R vector (a `dist`): at 20,000 observations
+// it is 1.6 GB, and it is only ever read. `cluster` arrives 1-indexed from R
+// and is returned to R the same way.
 #[extendr]
-fn rust_silhouette(d: Vec<f64>, n: i32, cluster: Vec<i32>, k: i32) -> List {
+fn rust_silhouette(d: Robj, n: i32, cluster: Vec<i32>, k: i32) -> List {
     let n = n as usize;
     let k = k as usize;
+    let d: &[f64] = d.as_real_slice().expect("`d` must be a double vector");
     let zero_based: Vec<usize> = cluster.iter().map(|&c| (c - 1) as usize).collect();
 
     let (widths, neighbours) =
-        threads::pool().install(|| metrics::silhouette(&d, n, &zero_based, k));
+        threads::pool().install(|| metrics::silhouette(d, n, &zero_based, k));
 
     // usize::MAX marks "no neighbouring cluster"; that becomes NA in R.
     let neighbour: Vec<Rint> = neighbours

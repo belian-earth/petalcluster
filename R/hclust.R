@@ -61,20 +61,24 @@ shoal_hclust <- function(d,
     cli::cli_abort("{.arg d} must describe at least 2 observations.")
   }
 
-  values <- as.double(d)
   # In double: the integer product overflows past 46,341 observations.
   expected <- as.double(n) * (n - 1) / 2
-  if (length(values) != expected) {
+  if (length(d) != expected) {
     cli::cli_abort(
-      "{.arg d} has {length(values)} dissimilarit{?y/ies}, expected {expected} for {n} observations."
+      "{.arg d} has {length(d)} dissimilarit{?y/ies}, expected {expected} for {n} observations."
     )
   }
   # kodama panics on NaN, so reject non-finite input here with a usable message.
-  if (anyNA(values) || any(!is.finite(values))) {
+  if (anyNA(d) || any(!is.finite(d))) {
     cli::cli_abort("{.arg d} must not contain missing or non-finite values.")
   }
+  if (!is.double(d)) {
+    d <- as.double(d)
+  }
 
-  res <- rust_hclust(values, as.integer(n), method)
+  # The dist object goes across as is; the copy kodama needs is made once
+  # on the Rust side rather than here as well.
+  res <- rust_hclust(d, as.integer(n), method)
 
   if (is.unsorted(res$height)) {
     cli::cli_warn(c(
