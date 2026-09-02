@@ -88,6 +88,21 @@ fn rust_hdbscan(
     list!(cluster = assignment, outlier_scores = outlier_scores)
 }
 
+/// Row-major copy of an R matrix: rows are then contiguous, where R's
+/// column-major layout would stride through memory once per feature.
+fn row_major(x: &RMatrix<f64>) -> Vec<f64> {
+    let n = x.nrows();
+    let ncol = x.ncols();
+    let col_major = x.data();
+    let mut data = Vec::with_capacity(n * ncol);
+    for i in 0..n {
+        for c in 0..ncol {
+            data.push(col_major[c * n + i]);
+        }
+    }
+    data
+}
+
 // Condensed lower-triangle distance matrix, in R's `dist` layout.
 //
 // The result vector is allocated by R up front and filled in place, so the
@@ -102,16 +117,7 @@ fn rust_dist(x: RMatrix<f64>, metric: &str, p: f64) -> List {
     let n = x.nrows();
     let ncol = x.ncols();
     let metric = dist::Metric::from_name(metric, p);
-
-    // Row-major copy: rows are then contiguous, where R's column-major
-    // layout would stride through memory once per feature.
-    let col_major = x.data();
-    let mut data = Vec::with_capacity(n * ncol);
-    for i in 0..n {
-        for c in 0..ncol {
-            data.push(col_major[c * n + i]);
-        }
-    }
+    let data = row_major(&x);
 
     let mut out = Doubles::new(n * (n.saturating_sub(1)) / 2);
     let finite = {
@@ -119,6 +125,26 @@ fn rust_dist(x: RMatrix<f64>, metric: &str, p: f64) -> List {
         threads::pool().install(|| dist::condensed_into(&data, n, ncol, metric, slice))
     };
     list!(values = out, finite = finite)
+}
+
+// Hierarchical clustering straight from data: Euclidean distances are
+// written into the one buffer kodama consumes, so the n(n-1)/2 values exist
+// once rather than as an R `dist` plus the copy kodama needs. At 50,000
+// points that is 10 GB instead of 20.
+#[extendr]
+fn rust_hclust_data(x: RMatrix<f64>, method: &str) -> List {
+    let n = x.nrows();
+    let ncol = x.ncols();
+    let data = row_major(&x);
+
+    let mut d = vec![0.0f64; n * (n.saturating_sub(1)) / 2];
+    let finite = threads::pool()
+        .install(|| dist::condensed_into(&data, n, ncol, dist::Metric::Euclidean, &mut d));
+    if !finite {
+        throw_r_error("Distance computation produced non-finite values.");
+    }
+
+    hclust_list(d, n, method)
 }
 
 // Hierarchical clustering over a condensed dissimilarity matrix.
@@ -145,6 +171,12 @@ fn rust_hclust(d: Robj, n: i32, method: &str) -> List {
         throw_r_error("`d` must not contain missing or non-finite values.");
     }
 
+    hclust_list(d, n, method)
+}
+
+/// Run kodama on a condensed matrix it may destroy and package the result as
+/// the `merge`, `height` and `order` components of an `hclust` object.
+fn hclust_list(d: Vec<f64>, n: usize, method: &str) -> List {
     let out = hclust::hclust(d, n, hclust::method_from_name(method));
     let n_steps = out.height.len();
 
@@ -383,6 +415,7 @@ extendr_module! {
     fn rust_hdbscan;
     fn rust_dist;
     fn rust_hclust;
+    fn rust_hclust_data;
     fn rust_kmeans;
     fn rust_nearest_centroid;
     fn rust_gmm;

@@ -11,7 +11,9 @@ shoal_hclust(
 }
 \arguments{
 \item{d}{A \link[stats:dist]{stats::dist} object, or a numeric matrix or data frame, in which
-case Euclidean distances are computed with \code{\link[=shoal_dist]{shoal_dist()}} first.}
+case Euclidean distances are computed on the way, into the single buffer
+the clustering works on: half the peak memory of calling \code{\link[=shoal_dist]{shoal_dist()}}
+first, at the cost of not keeping the distances.}
 
 \item{method}{Linkage method. One of \code{"complete"}, \code{"single"}, \code{"average"},
 \code{"weighted"}, \code{"ward"}, \code{"centroid"} or \code{"median"}.}

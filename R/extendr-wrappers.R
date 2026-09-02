@@ -22,6 +22,8 @@ rust_dist <- function(x, metric, p) .Call(wrap__rust_dist, x, metric, p)
 
 rust_hclust <- function(d, n, method) .Call(wrap__rust_hclust, d, n, method)
 
+rust_hclust_data <- function(x, method) .Call(wrap__rust_hclust_data, x, method)
+
 rust_kmeans <- function(x, k, init, n_runs, max_iter, tolerance, seed) .Call(wrap__rust_kmeans, x, k, init, n_runs, max_iter, tolerance, seed)
 
 rust_nearest_centroid <- function(x, centroids) .Call(wrap__rust_nearest_centroid, x, centroids)

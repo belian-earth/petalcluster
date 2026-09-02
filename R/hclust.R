@@ -24,7 +24,9 @@
 #' happens.
 #'
 #' @param d A [stats::dist] object, or a numeric matrix or data frame, in which
-#'   case Euclidean distances are computed with [shoal_dist()] first.
+#'   case Euclidean distances are computed on the way, into the single buffer
+#'   the clustering works on: half the peak memory of calling [shoal_dist()]
+#'   first, at the cost of not keeping the distances.
 #' @param method Linkage method. One of `"complete"`, `"single"`, `"average"`,
 #'   `"weighted"`, `"ward"`, `"centroid"` or `"median"`.
 #'
@@ -53,7 +55,7 @@ shoal_hclust <- function(d,
         "i" = "Pass {.code as.dist(d)} to use it as distances."
       ))
     }
-    d <- shoal_dist(d)
+    return(hclust_from_data(d, method, call = match.call()))
   }
 
   n <- attr(d, "Size")
@@ -82,23 +84,56 @@ shoal_hclust <- function(d,
   # on the Rust side rather than here as well.
   res <- rust_hclust(d, as.integer(n), method)
 
-  if (is.unsorted(res$height)) {
+  warn_inversions(res$height, method)
+
+  as_hclust(res, labels = attr(d, "Labels"), method = method,
+            call = match.call(), dist_method = attr(d, "method"))
+}
+
+#' Hierarchical clustering straight from a data matrix
+#'
+#' The Euclidean distances are written into the single buffer kodama works
+#' on, so the `n(n-1)/2` values exist once. Going through [shoal_dist()]
+#' would hold them twice: the R `dist` object and the copy kodama must be
+#' allowed to destroy. Same validation and result as the two-step route.
+#'
+#' @noRd
+hclust_from_data <- function(x, method, call) {
+  x <- check_numeric_matrix(x)
+  if (nrow(x) < 2L) {
+    cli::cli_abort("{.arg d} must have at least 2 rows to compute distances.")
+  }
+
+  res <- rust_hclust_data(x, method)
+  warn_inversions(res$height, method)
+
+  as_hclust(res, labels = rownames(x), method = method, call = call,
+            dist_method = "euclidean")
+}
+
+#' @noRd
+warn_inversions <- function(height, method) {
+  if (is.unsorted(height)) {
     cli::cli_warn(c(
       "The dendrogram contains inversions.",
       "i" = "{.val {method}} linkage does not guarantee monotone merge heights.",
       "i" = "{.fn cutree} will reject this tree."
     ))
   }
+  invisible(NULL)
+}
 
+#' @noRd
+as_hclust <- function(res, labels, method, call, dist_method) {
   structure(
     list(
       merge = res$merge,
       height = res$height,
       order = res$order,
-      labels = attr(d, "Labels"),
+      labels = labels,
       method = method,
-      call = match.call(),
-      dist.method = attr(d, "method")
+      call = call,
+      dist.method = dist_method
     ),
     class = "hclust"
   )
