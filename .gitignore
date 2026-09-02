@@ -18,3 +18,6 @@ src/rust/evoc-core/Cargo.lock
 inst/doc
 /doc/
 /Meta/
+
+/.quarto/
+**/*.quarto_ipynb
