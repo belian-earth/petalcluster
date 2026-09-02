@@ -66,26 +66,28 @@ ari <- function(a, b) {
   (sum_ij - expected) / ((sum_a + sum_b) / 2 - expected)
 }
 
-# Every algorithm on one input, as a one-row summary each.
+# Every algorithm on one input. Returns the cluster vectors, for drawing,
+# and a one-row summary per algorithm.
 run_all <- function(data, eps, min_cluster_size) {
   fits <- list(
-    "k-means"  = shoal_kmeans(data, k = 6L),
-    "GMM"      = shoal_gmm(data, k = 6L),
-    "DBSCAN"   = shoal_dbscan(data, eps = eps, min_samples = 10L),
-    "HDBSCAN"  = shoal_hdbscan(data, min_cluster_size = min_cluster_size,
-                               min_samples = 10L, boruvka = ncol(data) <= 10L)
+    "k-means" = shoal_kmeans(data, k = 6L),
+    "GMM"     = shoal_gmm(data, k = 6L),
+    "DBSCAN"  = shoal_dbscan(data, eps = eps, min_samples = 10L),
+    "HDBSCAN" = shoal_hdbscan(data, min_cluster_size = min_cluster_size,
+                              min_samples = 10L, boruvka = ncol(data) <= 10L)
   )
-  hc <- shoal_hclust(shoal_dist(data), method = "ward")
-  rows <- lapply(names(fits), function(nm) {
-    f <- fits[[nm]]
-    data.frame(algorithm = nm, clusters = f$n_clusters, noise = f$n_noise,
-               ari = round(ari(truth, f$cluster), 3))
-  })
-  rows[["hclust"]] <- data.frame(algorithm = "Ward (cut at 6)", clusters = 6L,
-                                 noise = 0L, ari = round(ari(truth, cutree(hc, 6)), 3))
-  out <- do.call(rbind, rows)
-  rownames(out) <- NULL
-  out
+  clusters <- lapply(fits, function(f) f$cluster)
+  clusters[["Ward (cut at 6)"]] <-
+    cutree(shoal_hclust(shoal_dist(data), method = "ward"), 6)
+
+  summary <- do.call(rbind, lapply(names(clusters), function(nm) {
+    cl <- clusters[[nm]]
+    data.frame(algorithm = nm,
+               clusters = length(unique(cl[!is.na(cl)])),
+               noise = sum(is.na(cl)),
+               ari = round(ari(truth, cl), 3))
+  }))
+  list(clusters = clusters, summary = summary)
 }
 ```
 
@@ -93,7 +95,7 @@ run_all <- function(data, eps, min_cluster_size) {
 
 ```{r raw}
 raw <- run_all(x, eps = 2, min_cluster_size = 100L)
-raw
+raw$summary
 ```
 
 The centroid and hierarchical methods find something, because the classes do
@@ -142,9 +144,31 @@ it is chosen afresh.
 ```{r embedded}
 embedded <- run_all(u, eps = 0.3, min_cluster_size = 100L)
 
-comparison <- merge(raw, embedded, by = "algorithm", suffixes = c("_raw", "_umap"))
+comparison <- merge(raw$summary, embedded$summary, by = "algorithm",
+                    suffixes = c("_raw", "_umap"))
 comparison[order(-comparison$ari_umap), c("algorithm", "ari_raw", "ari_umap",
                                           "clusters_umap", "noise_umap")]
+```
+
+The same layout serves as a canvas for both: on the left, each algorithm's
+clusters from the raw 36 dimensions, drawn at the UMAP coordinates; on the
+right, its clusters from the embedding itself.
+
+```{r grid, fig.width = 6.5, fig.height = 13}
+draw <- function(cluster, title) {
+  k <- length(unique(cluster[!is.na(cluster)]))
+  noise <- is.na(cluster)
+  plot(u, col = ifelse(noise, "grey60", shoal_palette(k)[cluster]),
+       pch = ifelse(noise, 4, 19), cex = 0.3, axes = FALSE, xlab = "", ylab = "",
+       main = title, cex.main = 0.95)
+  box()
+}
+
+par(mfrow = c(5, 2), mar = c(0.5, 0.5, 2, 0.5))
+for (nm in names(raw$clusters)) {
+  draw(raw$clusters[[nm]], paste(nm, "on raw data"))
+  draw(embedded$clusters[[nm]], paste(nm, "on UMAP"))
+}
 ```
 
 Three different things happened.
@@ -215,21 +239,17 @@ score against the labels is partly the luck of the draw. When a clustering is
 going to be acted on, the stable one is worth more than the one that happened
 to score best.
 
-## Where EVoC fits
+## Why not EVoC?
 
-`shoal_evoc()` does something similar internally: a nearest-neighbour graph,
-a learned node embedding of it, and a density clustering of that at several
-granularities, in one call. The difference is that it assumes cosine
-geometry, which is right for embedding vectors from a text or image model and
-wrong for spectral measurements like these. On this data it finds a few
-clusters and labels a large share of the input as noise; on the data it is
-built for, it replaces the whole UMAP-then-HDBSCAN recipe.
-
-```{r evoc}
-ev <- shoal_evoc(x, min_cluster_size = 100L)
-ev$n_clusters
-ev$n_noise
-```
+`shoal_evoc()` runs this recipe in one call: a nearest-neighbour graph, a
+learned node embedding of it, and a density clustering of that at several
+granularities. It is not the tool for either stage here, though. Its input
+must be embedding vectors in the cosine sense, high-dimensional directions
+such as a text or image model produces, and 36 spectral bands are not that.
+Nor is the UMAP layout: it is a two-dimensional Euclidean picture, and cosine
+distance in two dimensions collapses to the angle from the origin. For data
+that is embedding vectors, see `vignette("evoc")`, which compares EVoC with
+this UMAP-then-cluster recipe on real sentence embeddings.
 
 ## Practical notes
 
