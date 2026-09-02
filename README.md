@@ -307,12 +307,13 @@ ev
 #> ✔ 2: 8 clusters, 7 noise, persistence 346.8
 ```
 
-The finest layer over-fragments and marks most points as noise; the most
-persistent layer, selected by default, is the useful one. Comparing it
-with the truth shows what a density method does with imbalanced data:
-the six largest topics come back exactly, the smallest is treated as
-noise, the second smallest merges into a neighbour, and most of the
-scattered points are flagged.
+The finest layer over-fragments and marks hundreds of points as noise;
+the most persistent layer, selected by default, is the useful one.
+Comparing it with the truth shows every topic recovered exactly, down to
+the one with 40 members. The scattered points are the weak spot: most
+are absorbed into the nearest topic rather than flagged, since at this
+size a handful of stray directions rarely forms a density gap of its
+own.
 
 ``` r
 table(cluster = ev$cluster, truth, useNA = "ifany")
