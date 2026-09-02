@@ -361,7 +361,7 @@
 <div class="section level2">
 <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
 </h2>
-<p>Every algorithm is benchmarked against the best R alternative and, where one exists, the Python one, at matched settings: the same k, restarts, iteration cap and linkage. Timings are medians of three runs on 20 cores, from 500 to 50,000 points, on Gaussian blobs in 2 and 10 dimensions and, for EVoC, on embedding-like data in 48. Scripts and data generation are in <code>bench/</code>.</p>
+<p>Every algorithm is benchmarked against the best R alternative and, where one exists, the Python one, at matched settings: the same k, restarts, iteration cap and linkage. Timings are medians of three runs on 20 cores and 62 GB, from 500 to 50,000 points, on Gaussian blobs in 2 and 10 dimensions and, for EVoC, on embedding-like data in 48. Scripts and data generation are in <code>bench/</code>; the 50,000-point Ward rows need about 30 GB of RAM.</p>
 <figure><img src="https://github.com/belian-earth/shoal/blob/main/bench/scaling.png?raw=true" alt="Scaling benchmark"><figcaption aria-hidden="true">
 Scaling benchmark
 </figcaption></figure><p>What the panels show, at 50,000 points unless noted:</p>
@@ -375,7 +375,7 @@ Scaling benchmark
 <li>
 <strong>Gaussian mixture</strong>: 20 to 170 times faster than mclust, which fits a hierarchical initialisation first, and level with scikit-learn from about 5,000 points, having been several times faster below that.</li>
 <li>
-<strong>Ward</strong>: 1.8 to 2 times faster than base R and 1.3 to 1.4 times faster than SciPy. All three run the same nearest-neighbour-chain algorithm, so the differences are in computing the distances that feed it. Runs stop at 20,000 points, where the distance matrix alone is 1.6 GB.</li>
+<strong>Ward</strong>: 2.5 to 4.5 times faster than base R and about 2 times faster than SciPy. All three run the same nearest-neighbour-chain algorithm, so the differences are in computing the distances that feed it. Given raw data, <code><a href="reference/shoal_hclust.html">shoal_hclust()</a></code> writes the distances straight into the buffer the clustering consumes, so at 50,000 points it holds one 10 GB vector where <code><a href="https://rdrr.io/r/stats/dist.html" class="external-link">stats::dist()</a></code> plus <code><a href="https://rdrr.io/r/stats/hclust.html" class="external-link">stats::hclust()</a></code> holds two, and that saved copy is most of the gap.</li>
 <li>
 <strong>Distances</strong>: <code><a href="reference/shoal_dist.html">shoal_dist()</a></code> is 2 times faster than <code><a href="https://rdrr.io/r/stats/dist.html" class="external-link">stats::dist()</a></code> in 2 dimensions and 4.5 times in 10, and level with SciPy’s <code>pdist()</code>, which edges it in 2 dimensions where the work is almost all memory traffic. The result is written straight into the R vector, one pass, in parallel.</li>
 <li>

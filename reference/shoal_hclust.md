@@ -24,9 +24,10 @@ shoal_hclust(
 
   A [stats::dist](https://rdrr.io/r/stats/dist.html) object, or a
   numeric matrix or data frame, in which case Euclidean distances are
-  computed with
+  computed on the way, into the single buffer the clustering works on:
+  half the peak memory of calling
   [`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md)
-  first.
+  first, at the cost of not keeping the distances.
 
 - method:
 

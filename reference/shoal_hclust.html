@@ -73,7 +73,9 @@ hierarchical clustering ecosystem work on the result unchanged.</p>
 
 <dl><dt id="arg-d">d<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>
 <dd><p>A <a href="https://rdrr.io/r/stats/dist.html" class="external-link">stats::dist</a> object, or a numeric matrix or data frame, in which
-case Euclidean distances are computed with <code><a href="shoal_dist.html">shoal_dist()</a></code> first.</p></dd>
+case Euclidean distances are computed on the way, into the single buffer
+the clustering works on: half the peak memory of calling <code><a href="shoal_dist.html">shoal_dist()</a></code>
+first, at the cost of not keeping the distances.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>

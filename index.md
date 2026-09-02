@@ -372,10 +372,11 @@ first thing to try.
 
 Every algorithm is benchmarked against the best R alternative and, where
 one exists, the Python one, at matched settings: the same k, restarts,
-iteration cap and linkage. Timings are medians of three runs on 20
-cores, from 500 to 50,000 points, on Gaussian blobs in 2 and 10
+iteration cap and linkage. Timings are medians of three runs on 20 cores
+and 62 GB, from 500 to 50,000 points, on Gaussian blobs in 2 and 10
 dimensions and, for EVoC, on embedding-like data in 48. Scripts and data
-generation are in `bench/`.
+generation are in `bench/`; the 50,000-point Ward rows need about 30 GB
+of RAM.
 
 ![Scaling
 benchmark](https://github.com/belian-earth/shoal/blob/main/bench/scaling.png?raw=true)
@@ -396,11 +397,16 @@ What the panels show, at 50,000 points unless noted:
 - **Gaussian mixture**: 20 to 170 times faster than mclust, which fits a
   hierarchical initialisation first, and level with scikit-learn from
   about 5,000 points, having been several times faster below that.
-- **Ward**: 1.8 to 2 times faster than base R and 1.3 to 1.4 times
-  faster than SciPy. All three run the same nearest-neighbour-chain
-  algorithm, so the differences are in computing the distances that feed
-  it. Runs stop at 20,000 points, where the distance matrix alone is 1.6
-  GB.
+- **Ward**: 2.5 to 4.5 times faster than base R and about 2 times faster
+  than SciPy. All three run the same nearest-neighbour-chain algorithm,
+  so the differences are in computing the distances that feed it. Given
+  raw data,
+  [`shoal_hclust()`](https://belian-earth.github.io/shoal/reference/shoal_hclust.md)
+  writes the distances straight into the buffer the clustering consumes,
+  so at 50,000 points it holds one 10 GB vector where
+  [`stats::dist()`](https://rdrr.io/r/stats/dist.html) plus
+  [`stats::hclust()`](https://rdrr.io/r/stats/hclust.html) holds two,
+  and that saved copy is most of the gap.
 - **Distances**:
   [`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md)
   is 2 times faster than
