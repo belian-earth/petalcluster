@@ -83,7 +83,7 @@ ev
 #>   2: 17 clusters, 674 noise, persistence 494.2
 #> ✔ 3: 9 clusters, 230 noise, persistence 799.6
 timing[["elapsed"]]
-#> [1] 0.093
+#> [1] 0.088
 ```
 
 ``` r
@@ -282,9 +282,9 @@ rbind(
 )
 #>                   method clusters noise   ari seconds
 #> 1                   EVoC        9   230 0.747    0.09
-#> 2 HDBSCAN on the vectors        7  1651 0.097    2.54
-#> 3      UMAP then HDBSCAN       13   151 0.679    4.03
-#> 4         k-means, k = 8        8     0 0.780    0.14
+#> 2 HDBSCAN on the vectors        7  1651 0.097    2.63
+#> 3      UMAP then HDBSCAN       13   151 0.679    3.76
+#> 4         k-means, k = 8        8     0 0.780    0.11
 ```
 
 HDBSCAN on the raw vectors is the case EVoC exists to fix: in 64

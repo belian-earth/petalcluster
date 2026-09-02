@@ -14,8 +14,9 @@ works anywhere a `dist` does:
 shoal_dist(
   x,
   metric = c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowski",
-    "cosine", "correlation"),
-  p = 2
+    "cosine", "correlation", "mahalanobis"),
+  p = 2,
+  cov = NULL
 )
 ```
 
@@ -30,12 +31,19 @@ shoal_dist(
 - metric:
 
   Distance metric. One of `"euclidean"`, `"maximum"`, `"manhattan"`,
-  `"canberra"`, `"binary"`, `"minkowski"`, `"cosine"` or
-  `"correlation"`.
+  `"canberra"`, `"binary"`, `"minkowski"`, `"cosine"`, `"correlation"`
+  or `"mahalanobis"`.
 
 - p:
 
   Power for `metric = "minkowski"`. Ignored otherwise. Default `2`.
+
+- cov:
+
+  Covariance matrix for `metric = "mahalanobis"`, `ncol(x)` square and
+  positive definite. `NULL` (default) uses
+  [`stats::cov()`](https://rdrr.io/r/stats/cor.html) of `x`, which needs
+  more rows than columns. Ignored for other metrics.
 
 ## Value
 
@@ -48,10 +56,22 @@ and `call` attributes.
 Metrics shared with [`stats::dist()`](https://rdrr.io/r/stats/dist.html)
 follow its definitions exactly, including the way `"canberra"` drops and
 rescales degenerate terms and the way `"binary"` treats non-zero entries
-as "on". `"cosine"` matches the `metric = "cosine"` option on
+as "on". Note that `"canberra"` divides by `|x| + |y|`, which is what
+[`stats::dist()`](https://rdrr.io/r/stats/dist.html) computes; its
+documentation writes `|x + y|`, and the two differ on signed data.
+`"cosine"` matches the `metric = "cosine"` option on
 [`shoal_dbscan()`](https://belian-earth.github.io/shoal/reference/shoal_dbscan.md)
 and
 [`shoal_hdbscan()`](https://belian-earth.github.io/shoal/reference/shoal_hdbscan.md).
+
+`"mahalanobis"` is the Euclidean distance after the columns have been
+decorrelated and scaled by a covariance matrix, by default the sample
+covariance of `x`: features on different scales or correlated with one
+another then count once rather than several times. It is computed by
+whitening `x` with the Cholesky factor of the covariance and taking
+Euclidean distances, so it costs the same as `"euclidean"` plus one
+`p x p` factorisation. Pass `cov` to measure against a reference
+covariance rather than the sample's own.
 
 ## See also
 
@@ -3363,4 +3383,8 @@ d
 #> 148                    
 #> 149 0.6164414          
 #> 150 0.6403124 0.7681146
+
+# Mahalanobis: petal length and width are strongly correlated in iris, so
+# their shared variation counts once.
+m <- shoal_dist(as.matrix(iris[, 1:4]), metric = "mahalanobis")
 ```
