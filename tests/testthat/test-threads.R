@@ -25,6 +25,8 @@ test_that("results do not depend on the thread count", {
     dbscan = shoal_dbscan(x, eps = 0.5, min_samples = 5L)$cluster,
     hdbscan = shoal_hdbscan(x)$cluster,
     evoc = shoal_evoc(emb, min_cluster_size = 15L)$layers,
+    kmeans = shoal_kmeans(x, k = 3L)[c("cluster", "centroids", "inertia")],
+    gmm = shoal_gmm(x, k = 3L)[c("cluster", "means", "loglik")],
     sil = shoal_silhouette(shoal_dist(x), shoal_kmeans(x, k = 3L))$width
   )
   shoal_threads(1)

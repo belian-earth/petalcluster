@@ -7,9 +7,11 @@
 #'
 #' Parallel work covers [shoal_evoc()]'s neighbour search, spanning tree and
 #' node embedding; [shoal_dbscan()]'s neighbour queries and
-#' [shoal_hdbscan()]'s core distances and spanning tree; [shoal_dist()]; and
-#' [shoal_silhouette()]. k-means, Gaussian mixtures and hierarchical
-#' clustering are single-threaded. Results never depend on the thread count.
+#' [shoal_hdbscan()]'s core distances and spanning tree; [shoal_kmeans()]'s
+#' assignment step and initialisation, which the Gaussian mixture shares
+#' through its k-means start; [shoal_dist()]; and [shoal_silhouette()].
+#' Hierarchical clustering and the mixture's EM iterations are
+#' single-threaded. Results never depend on the thread count.
 #'
 #' # Default
 #'

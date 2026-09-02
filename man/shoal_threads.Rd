@@ -21,9 +21,11 @@ for the session.
 \details{
 Parallel work covers \code{\link[=shoal_evoc]{shoal_evoc()}}'s neighbour search, spanning tree and
 node embedding; \code{\link[=shoal_dbscan]{shoal_dbscan()}}'s neighbour queries and
-\code{\link[=shoal_hdbscan]{shoal_hdbscan()}}'s core distances and spanning tree; \code{\link[=shoal_dist]{shoal_dist()}}; and
-\code{\link[=shoal_silhouette]{shoal_silhouette()}}. k-means, Gaussian mixtures and hierarchical
-clustering are single-threaded. Results never depend on the thread count.
+\code{\link[=shoal_hdbscan]{shoal_hdbscan()}}'s core distances and spanning tree; \code{\link[=shoal_kmeans]{shoal_kmeans()}}'s
+assignment step and initialisation, which the Gaussian mixture shares
+through its k-means start; \code{\link[=shoal_dist]{shoal_dist()}}; and \code{\link[=shoal_silhouette]{shoal_silhouette()}}.
+Hierarchical clustering and the mixture's EM iterations are
+single-threaded. Results never depend on the thread count.
 }
 \section{Default}{
 On load the pool takes, in order of precedence, the \code{shoal.threads} option,

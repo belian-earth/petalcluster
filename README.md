@@ -375,11 +375,11 @@ Two things to know when the data is wide:
 The Rust backends run their parallel stages on a thread pool owned by
 the package: EVoC’s neighbour search, spanning tree and node embedding;
 DBSCAN’s neighbour queries; HDBSCAN’s core distances and spanning tree;
-`shoal_dist()` and `shoal_silhouette()`. By default it uses every
-logical core. `shoal_threads(n)` resizes it for the session and
-`shoal_threads()` reports the current size; `options(shoal.threads = n)`
-or `RAYON_NUM_THREADS` set the default before the package loads. Results
-never depend on the thread count.
+k-means’ assignment step; `shoal_dist()` and `shoal_silhouette()`. By
+default it uses every logical core. `shoal_threads(n)` resizes it for
+the session and `shoal_threads()` reports the current size;
+`options(shoal.threads = n)` or `RAYON_NUM_THREADS` set the default
+before the package loads. Results never depend on the thread count.
 
 ## Development notes
 

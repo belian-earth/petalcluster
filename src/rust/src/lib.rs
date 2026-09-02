@@ -137,19 +137,26 @@ fn rust_kmeans(
 ) -> List {
     let data = rmatrix_to_array2_linfa(x);
 
-    // extendr 0.8 turns an `Err` return into an opaque "User function
-    // panicked", so errors are raised explicitly here to keep their message.
+    // linfa's assignment step and initialisation are parallel through
+    // ndarray's rayon feature, so they run in the package pool like
+    // everything else. extendr 0.8 turns an `Err` return into an opaque
+    // "User function panicked", so errors are raised explicitly to keep
+    // their message.
+    let init = kmeans::init_from_name(init);
     let fit = unwrap_or_throw_error(
-        kmeans::fit(
-            data,
-            k as usize,
-            kmeans::init_from_name(init),
-            n_runs as usize,
-            max_iter as u64,
-            tolerance,
-            seed as u64,
-        )
-        .map_err(|e| Error::Other(format!("k-means failed: {e}"))),
+        threads::pool()
+            .install(|| {
+                kmeans::fit(
+                    data,
+                    k as usize,
+                    init,
+                    n_runs as usize,
+                    max_iter as u64,
+                    tolerance,
+                    seed as u64,
+                )
+            })
+            .map_err(|e| Error::Other(format!("k-means failed: {e}"))),
     );
 
     let n_clusters = fit.centroids.nrows();
@@ -177,7 +184,8 @@ fn rust_nearest_centroid(x: RMatrix<f64>, centroids: RMatrix<f64>) -> Integers {
     let data = rmatrix_to_array2_linfa(x);
     let centroids = rmatrix_to_array2_linfa(centroids);
 
-    kmeans::nearest_centroid(&data, &centroids)
+    threads::pool()
+        .install(|| kmeans::nearest_centroid(&data, &centroids))
         .into_iter()
         .map(Rint::from)
         .collect()
@@ -200,18 +208,22 @@ fn rust_gmm(
 ) -> List {
     let data = rmatrix_to_array2_linfa(x);
 
+    let init = gmm::init_from_name(init);
     let fit = unwrap_or_throw_error(
-        gmm::fit(
-            data,
-            k as usize,
-            gmm::init_from_name(init),
-            n_runs as u64,
-            max_iter as u64,
-            tolerance,
-            reg_covariance,
-            seed as u64,
-        )
-        .map_err(|e| Error::Other(format!("Gaussian mixture fit failed: {e}"))),
+        threads::pool()
+            .install(|| {
+                gmm::fit(
+                    data,
+                    k as usize,
+                    init,
+                    n_runs as u64,
+                    max_iter as u64,
+                    tolerance,
+                    reg_covariance,
+                    seed as u64,
+                )
+            })
+            .map_err(|e| Error::Other(format!("Gaussian mixture fit failed: {e}"))),
     );
 
     let n_clusters = fit.means.nrows();
