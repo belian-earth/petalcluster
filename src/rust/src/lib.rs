@@ -8,7 +8,9 @@ mod dist;
 mod evoc;
 mod gmm;
 mod hclust;
+mod kdtree;
 mod kmeans;
+mod knn;
 mod metrics;
 mod threads;
 use convert::{
@@ -125,6 +127,42 @@ fn rust_dist(x: RMatrix<f64>, metric: &str, p: f64) -> List {
         threads::pool().install(|| dist::condensed_into(&data, n, ncol, metric, slice))
     };
     list!(values = out, finite = finite)
+}
+
+// Exact k nearest neighbours of each row of `x` (self excluded), or of each
+// row of `query` among the rows of `x`, by a brute-force scan or a kd-tree.
+// Both matrices come across column-major and are made row-major once, so
+// the inner loop over candidates walks contiguous memory.
+//
+// Returns one-based indices and distances as `m x k` matrices, plus whether
+// every distance computed was finite, so the R side need not scan them.
+#[extendr]
+fn rust_knn(
+    x: RMatrix<f64>,
+    query: Nullable<RMatrix<f64>>,
+    k: i32,
+    metric: &str,
+    p: f64,
+    search: &str,
+) -> List {
+    let n = x.nrows();
+    let ncol = x.ncols();
+    let k = k as usize;
+    let metric = dist::Metric::from_name(metric, p);
+    let search = knn::Search::from_name(search);
+    let data = row_major(&x);
+    let query = match query {
+        Nullable::NotNull(q) => Some(row_major(&q)),
+        Nullable::Null => None,
+    };
+
+    let res = threads::pool()
+        .install(|| knn::search(&data, n, ncol, query.as_deref(), k, metric, search));
+
+    let m = res.index.len() / k;
+    let id = RMatrix::new_matrix(m, k, |i, j| res.index[i * k + j]);
+    let dist = RMatrix::new_matrix(m, k, |i, j| res.dist[i * k + j]);
+    list!(id = id, dist = dist, finite = res.finite)
 }
 
 // Hierarchical clustering straight from data: Euclidean distances are
@@ -414,6 +452,7 @@ extendr_module! {
     fn rust_dbscan;
     fn rust_hdbscan;
     fn rust_dist;
+    fn rust_knn;
     fn rust_hclust;
     fn rust_hclust_data;
     fn rust_kmeans;

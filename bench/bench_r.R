@@ -105,6 +105,13 @@ benchmarks <- list(
     alt_name = "stats", max_n = Inf   # n^2 / 2 doubles: 10 GB at 50k
   ),
   list(
+    algorithm = "kNN", family = "blobs",
+    # search = "auto": the kd-tree in 2 dimensions, the scan in 10.
+    shoal = function(x) shoal_knn(x, k = 10L),
+    alt = function(x) dbscan::kNN(x, k = 10L),
+    alt_name = "dbscan", max_n = Inf
+  ),
+  list(
     algorithm = "EVoC", family = "emb",
     shoal = function(x) shoal_evoc(x, min_cluster_size = 15L),
     alt = NULL, alt_name = NULL, max_n = 0L  # no R alternative

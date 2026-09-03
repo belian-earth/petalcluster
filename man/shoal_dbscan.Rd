@@ -30,3 +30,7 @@ res <- shoal_dbscan(as.matrix(iris[, 1:4]), eps = 0.5, min_samples = 5L)
 res
 
 }
+\seealso{
+\code{\link[=shoal_knn]{shoal_knn()}}, whose \code{plot()} method draws the k-nearest-neighbour
+distance curve used to choose \code{eps}.
+}

@@ -32,8 +32,10 @@ reference:
   - shoal_evoc
   - shoal_hclust
 - title: Distances
-  desc: Pairwise distance matrices.
-  contents: shoal_dist
+  desc: Pairwise distance matrices and nearest-neighbour search.
+  contents:
+  - shoal_dist
+  - shoal_knn
 - title: Validation
   desc: Assessing a clustering, and choosing the number of clusters.
   contents:

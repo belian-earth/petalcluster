@@ -28,6 +28,7 @@ Imports:
     utils,
     viridisLite
 Suggests:
+    dbscan,
     knitr,
     mlbench,
     rmarkdown,
