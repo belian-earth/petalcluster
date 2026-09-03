@@ -20,6 +20,8 @@ rust_hdbscan <- function(x, alpha, min_samples, min_cluster_size, metric, boruvk
 
 rust_dist <- function(x, metric, p) .Call(wrap__rust_dist, x, metric, p)
 
+rust_knn <- function(x, query, k, metric, p, search) .Call(wrap__rust_knn, x, query, k, metric, p, search)
+
 rust_hclust <- function(d, n, method) .Call(wrap__rust_hclust, d, n, method)
 
 rust_hclust_data <- function(x, method) .Call(wrap__rust_hclust_data, x, method)

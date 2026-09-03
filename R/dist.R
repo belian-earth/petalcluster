@@ -92,8 +92,17 @@ shoal_dist <- function(x,
 #' `R^-T u` and `R^-T v`. Transforming every row once is `O(n p^2)`, against
 #' the `O(n^2 p)` of the distances themselves.
 #'
+#' Split into finding the factor and applying it so that `shoal_knn()` can
+#' whiten a query set with the factor of its reference set.
+#'
 #' @noRd
 whiten <- function(x, cov, call = rlang::caller_env()) {
+  apply_whitening(x, whitening_factor(x, cov, call = call))
+}
+
+#' The upper Cholesky factor of `cov`, or of the sample covariance of `x`
+#' @noRd
+whitening_factor <- function(x, cov, call = rlang::caller_env()) {
   p <- ncol(x)
   if (is.null(cov)) {
     if (nrow(x) <= p) {
@@ -115,13 +124,17 @@ whiten <- function(x, cov, call = rlang::caller_env()) {
     }
   }
 
-  ch <- tryCatch(chol(cov), error = function(e) {
+  tryCatch(chol(cov), error = function(e) {
     cli::cli_abort(c(
       "The covariance matrix is not positive definite.",
       "i" = "A constant or collinear column makes it singular; drop it, or supply a regularised {.arg cov}."
     ), call = call)
   })
+}
 
+#' Transform the rows of `x` by `R^-T`, for `R` from `whitening_factor()`
+#' @noRd
+apply_whitening <- function(x, ch) {
   # Row i becomes R^-T x_i; solving against the transpose avoids an inverse.
   z <- t(backsolve(ch, t(x), transpose = TRUE))
   dimnames(z) <- dimnames(x)

@@ -13,6 +13,9 @@
 #'   `n_clusters`, `n_noise`, `data` (the input matrix), `algorithm`, `params`,
 #'   and `metric`.
 #'
+#' @seealso [shoal_knn()], whose `plot()` method draws the k-nearest-neighbour
+#'   distance curve used to choose `eps`.
+#'
 #' @examples
 #' res <- shoal_dbscan(as.matrix(iris[, 1:4]), eps = 0.5, min_samples = 5L)
 #' res

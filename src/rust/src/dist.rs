@@ -6,7 +6,7 @@ use rayon::prelude::*;
 /// treatment of degenerate terms, so the two are numerically comparable.
 /// `Cosine` matches `petal_neighbors::distance::Cosine`, so it agrees with the
 /// `metric = "cosine"` option on the density-based algorithms.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Metric {
     Euclidean,
     Maximum,
@@ -37,7 +37,7 @@ impl Metric {
     }
 
     #[inline(always)]
-    fn compute(self, a: &[f64], b: &[f64]) -> f64 {
+    pub(crate) fn compute(self, a: &[f64], b: &[f64]) -> f64 {
         match self {
             Metric::Euclidean => a
                 .iter()
