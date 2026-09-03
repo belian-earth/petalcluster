@@ -7,7 +7,9 @@ Run from project root:
 
 Settings match bench_r.R: the same k, restarts, iteration cap and linkage.
 scikit-learn covers DBSCAN, HDBSCAN, k-means and the Gaussian mixture; SciPy
-covers Ward linkage; EVoC is compared with its reference implementation. The
+covers Ward linkage and the distance matrix; the neighbour search is
+compared with scikit-learn's NearestNeighbors; EVoC is compared with its
+reference implementation. The
 reference implementation is JIT-compiled, so it is warmed on a small input
 before timing.
 """
@@ -35,6 +37,7 @@ from scipy.cluster.hierarchy import linkage
 from scipy.spatial.distance import pdist
 from sklearn.cluster import DBSCAN, HDBSCAN, KMeans
 from sklearn.mixture import GaussianMixture
+from sklearn.neighbors import NearestNeighbors
 
 warnings.filterwarnings("ignore")
 
@@ -81,6 +84,9 @@ BENCHMARKS = [
      lambda x: linkage(x, method="ward"), np.inf),
     ("Distances", "blobs", "scipy",
      lambda x: pdist(x), np.inf),
+    # kneighbors() with no query excludes each point itself, as shoal does.
+    ("kNN", "blobs", "sklearn",
+     lambda x: NearestNeighbors(n_neighbors=10).fit(x).kneighbors(), np.inf),
     ("EVoC", "emb", "evoc", evoc_fit, np.inf),
 ]
 
