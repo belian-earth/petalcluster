@@ -48,7 +48,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/evoc.html">Clustering embeddings with EVoC</a></li>
+<li><a class="dropdown-item" href="articles/distances.html">Distances and neighbours</a></li>
+    <li><a class="dropdown-item" href="articles/evoc.html">Clustering embeddings with EVoC</a></li>
     <li><a class="dropdown-item" href="articles/umap.html">Clustering after UMAP</a></li>
   </ul>
 </li>
@@ -73,7 +74,7 @@
 </div>
 <!-- badges: start -->
 
-<p>shoal is a small, foundational set of clustering algorithms with Rust backends, presented behind one consistent interface. Every algorithm takes a numeric matrix or data frame, returns an object of the shared <code>shoal_clustering</code> class, and prints and plots the same way. Noise points are <code>NA</code> in the cluster vector, so downstream code never has to know which algorithm produced a result.</p>
+<p>shoal is a fast, foundational toolkit for clustering in R, with Rust backends behind one consistent interface. Six clustering algorithms, from k-means to EVoC, take a numeric matrix or data frame and return one shared result class that prints and plots the same way, with noise points as <code>NA</code>. Alongside them are the building blocks clustering rests on: pairwise distance matrices and exact nearest-neighbour search under nine metrics, and the indices for choosing the number of clusters on evidence. Everything runs multithreaded, and every function matches or improves on the best R and Python alternatives.</p>
 <table class="table">
 <colgroup>
 <col width="25%">
@@ -127,7 +128,32 @@
 </tr>
 </tbody>
 </table>
-<p><code><a href="reference/shoal_dist.html">shoal_dist()</a></code> builds distance matrices, and <code><a href="reference/shoal_silhouette.html">shoal_silhouette()</a></code> and <code><a href="reference/shoal_metrics.html">shoal_metrics()</a></code> score a clustering so the number of clusters can be chosen on evidence. Distance matrices and dendrograms are returned as R’s own <code>dist</code> and <code>hclust</code> classes, so <code><a href="https://rdrr.io/r/stats/cutree.html" class="external-link">cutree()</a></code>, <code><a href="https://rdrr.io/r/stats/dendrogram.html" class="external-link">as.dendrogram()</a></code> and <code><a href="https://rdrr.io/r/stats/cmdscale.html" class="external-link">cmdscale()</a></code> work without glue.</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Function</th>
+<th>Does</th>
+</tr></thead>
+<tbody>
+<tr>
+<td><code><a href="reference/shoal_dist.html">shoal_dist()</a></code></td>
+<td>Pairwise distances under nine metrics, returned as R’s own <code>dist</code> so <code><a href="https://rdrr.io/r/stats/cmdscale.html" class="external-link">cmdscale()</a></code>, <code><a href="https://rdrr.io/pkg/cluster/man/pam.html" class="external-link">cluster::pam()</a></code> and the rest work without glue.</td>
+</tr>
+<tr>
+<td><code><a href="reference/shoal_knn.html">shoal_knn()</a></code></td>
+<td>Exact k-nearest neighbours by kd-tree or parallel scan, same metrics, with a <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> that picks <code>eps</code> for DBSCAN.</td>
+</tr>
+<tr>
+<td>
+<code><a href="reference/shoal_silhouette.html">shoal_silhouette()</a></code>, <code><a href="reference/shoal_metrics.html">shoal_metrics()</a></code>
+</td>
+<td>Silhouette widths, Calinski-Harabasz and Davies-Bouldin, for choosing the number of clusters.</td>
+</tr>
+</tbody>
+</table>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -135,150 +161,16 @@
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"belian-earth/shoal"</span><span class="op">)</span></span></code></pre></div>
 <p>Requires a working <a href="https://rustup.rs/" class="external-link">Rust toolchain</a> (rustc &gt;= 1.81).</p>
-<p>Three vignettes go further than this page: <code><a href="articles/shoal.html">vignette("shoal")</a></code> introduces each algorithm in turn with a picture of what it finds, <code><a href="articles/umap.html">vignette("umap")</a></code> shows what embedding wide data with UMAP does to each of them, and <code><a href="articles/evoc.html">vignette("evoc")</a></code> clusters real sentence embeddings with EVoC and compares it with the alternatives.</p>
 </div>
 <div class="section level2">
-<h2 id="a-worked-example">A worked example<a class="anchor" aria-label="anchor" href="#a-worked-example"></a>
+<h2 id="a-first-look">A first look<a class="anchor" aria-label="anchor" href="#a-first-look"></a>
 </h2>
-<p>Every algorithm shares the same shape of call and result. Take the four measurements in <code>iris</code> as a matrix, and ask k-means for three clusters.</p>
+<p>The bundled <code>rings</code> data is three concentric rings plus scattered noise, the case that defeats centroid methods. HDBSCAN finds the rings and labels the noise without being told how many groups to look for.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://belian-earth.github.io/shoal/">shoal</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">as.matrix</a></span><span class="op">(</span><span class="va">iris</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">km</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/shoal_kmeans.html">shoal_kmeans</a></span><span class="op">(</span><span class="va">x</span>, k <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span></span>
-<span><span class="va">km</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── K-Means Clustering</span></span>
-<span><span class="co">#&gt; Parameters: k = 3, init = kmeans++, n_runs = 10, seed = 1</span></span>
-<span><span class="co">#&gt; Clusters: 3, Noise points: 0</span></span>
-<span><span class="co">#&gt; Within-cluster sum of squares: 78.851</span></span>
-<span><span class="co">#&gt; Cluster sizes: 50, 38, 62</span></span></code></pre></div>
-<p>The result is a list. <code>cluster</code> is the assignment, <code>data</code> is the matrix the model was fitted to, and <code>params</code> records the call, so a result can be inspected long after the code that produced it has scrolled away.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="va">km</span><span class="op">$</span><span class="va">cluster</span><span class="op">)</span></span>
-<span><span class="co">#&gt;  int [1:150] 1 1 1 1 1 1 1 1 1 1 ...</span></span>
-<span><span class="va">km</span><span class="op">$</span><span class="va">centroids</span></span>
-<span><span class="co">#&gt;      Sepal.Length Sepal.Width Petal.Length Petal.Width</span></span>
-<span><span class="co">#&gt; [1,]     5.006000    3.428000     1.462000    0.246000</span></span>
-<span><span class="co">#&gt; [2,]     6.850000    3.073684     5.742105    2.071053</span></span>
-<span><span class="co">#&gt; [3,]     5.901613    2.748387     4.393548    1.433871</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="choosing-the-number-of-clusters">Choosing the number of clusters<a class="anchor" aria-label="anchor" href="#choosing-the-number-of-clusters"></a>
-</h3>
-<p><code>k</code> is the central modelling decision, so shoal does not guess it. Fit across a range and compare. <code><a href="reference/shoal_metrics.html">shoal_metrics()</a></code> reports the Calinski-Harabasz index (higher is better) and the Davies-Bouldin index (lower is better) for any partition; <code><a href="reference/shoal_gmm.html">shoal_gmm()</a></code> results have a <code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code> method, so <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">BIC()</a></code> works on them directly.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ks</span> <span class="op">&lt;-</span> <span class="fl">2</span><span class="op">:</span><span class="fl">6</span></span>
-<span></span>
-<span><span class="va">indices</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">ks</span>, <span class="kw">function</span><span class="op">(</span><span class="va">k</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="reference/shoal_metrics.html">shoal_metrics</a></span><span class="op">(</span><span class="fu"><a href="reference/shoal_kmeans.html">shoal_kmeans</a></span><span class="op">(</span><span class="va">x</span>, k <span class="op">=</span> <span class="va">k</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">indices</span><span class="op">$</span><span class="va">bic</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">ks</span>, <span class="kw">function</span><span class="op">(</span><span class="va">k</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">BIC</a></span><span class="op">(</span><span class="fu"><a href="reference/shoal_gmm.html">shoal_gmm</a></span><span class="op">(</span><span class="va">x</span>, k <span class="op">=</span> <span class="va">k</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">indices</span></span>
-<span><span class="co">#&gt;     n k calinski_harabasz davies_bouldin      bic</span></span>
-<span><span class="co">#&gt; 1 150 2          513.9245      0.4042928 574.0178</span></span>
-<span><span class="co">#&gt; 2 150 3          561.6278      0.6619715 580.8594</span></span>
-<span><span class="co">#&gt; 3 150 4          530.4871      0.7757009 629.7790</span></span>
-<span><span class="co">#&gt; 4 150 5          495.5415      0.8059652 670.0892</span></span>
-<span><span class="co">#&gt; 5 150 6          473.8506      0.9141580 714.9977</span></span></code></pre></div>
-<p>The indices disagree, which is the honest answer for this data. Davies-Bouldin and BIC favour two clusters, because setosa is clearly separated while versicolor and virginica overlap; Calinski-Harabasz peaks at the three species. Choosing between those readings is a modelling decision, which is why shoal leaves it to you.</p>
-<p>Silhouette widths give the same verdict per observation. They need a distance matrix, which <code><a href="reference/shoal_dist.html">shoal_dist()</a></code> computes in Rust.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/shoal_dist.html">shoal_dist</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">sil</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/shoal_silhouette.html">shoal_silhouette</a></span><span class="op">(</span><span class="va">d</span>, <span class="va">km</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">sil</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   cluster neighbour     width</span></span>
-<span><span class="co">#&gt; 1       1         3 0.8529551</span></span>
-<span><span class="co">#&gt; 2       1         3 0.8154948</span></span>
-<span><span class="co">#&gt; 3       1         3 0.8293151</span></span>
-<span><span class="co">#&gt; 4       1         3 0.8050139</span></span>
-<span><span class="co">#&gt; 5       1         3 0.8493016</span></span>
-<span><span class="co">#&gt; 6       1         3 0.7482804</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">sil</span>, <span class="st">"avg_width"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 0.552819</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="soft-memberships">Soft memberships<a class="anchor" aria-label="anchor" href="#soft-memberships"></a>
-</h3>
-<p>A Gaussian mixture gives every observation a probability of belonging to each component rather than a single label. <code>cluster</code> is the row-wise maximum, for consistency with the other algorithms, and <code>posterior</code> holds the full matrix.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">gm</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/shoal_gmm.html">shoal_gmm</a></span><span class="op">(</span><span class="va">x</span>, k <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span></span>
-<span><span class="va">gm</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── Gaussian Mixture Clustering</span></span>
-<span><span class="co">#&gt; Parameters: k = 3, init = kmeans, n_runs = 1, seed = 1</span></span>
-<span><span class="co">#&gt; Clusters: 3, Noise points: 0</span></span>
-<span><span class="co">#&gt; Log-likelihood: -180.196, BIC: 580.859</span></span>
-<span><span class="co">#&gt; Mixing proportions: 0.333, 0.365, 0.301</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">gm</span><span class="op">$</span><span class="va">posterior</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
-<span><span class="co">#&gt;      [,1] [,2] [,3]</span></span>
-<span><span class="co">#&gt; [1,]    1    0    0</span></span>
-<span><span class="co">#&gt; [2,]    1    0    0</span></span>
-<span><span class="co">#&gt; [3,]    1    0    0</span></span>
-<span><span class="co">#&gt; [4,]    1    0    0</span></span>
-<span><span class="co">#&gt; [5,]    1    0    0</span></span>
-<span><span class="co">#&gt; [6,]    1    0    0</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="hierarchical-clustering">Hierarchical clustering<a class="anchor" aria-label="anchor" href="#hierarchical-clustering"></a>
-</h3>
-<p><code><a href="reference/shoal_hclust.html">shoal_hclust()</a></code> accepts the distance matrix from <code><a href="reference/shoal_dist.html">shoal_dist()</a></code>, or raw data, and returns a standard <code>hclust</code> object.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hc</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/shoal_hclust.html">shoal_hclust</a></span><span class="op">(</span><span class="va">d</span>, method <span class="op">=</span> <span class="st">"ward"</span><span class="op">)</span></span>
-<span><span class="va">hc</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Call:</span></span>
-<span><span class="co">#&gt; shoal_hclust(d = d, method = "ward")</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Cluster method   : ward </span></span>
-<span><span class="co">#&gt; Distance         : euclidean </span></span>
-<span><span class="co">#&gt; Number of objects: 150</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/cutree.html" class="external-link">cutree</a></span><span class="op">(</span><span class="va">hc</span>, k <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>, <span class="va">iris</span><span class="op">$</span><span class="va">Species</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    </span></span>
-<span><span class="co">#&gt;     setosa versicolor virginica</span></span>
-<span><span class="co">#&gt;   1     50          0         0</span></span>
-<span><span class="co">#&gt;   2      0         49        15</span></span>
-<span><span class="co">#&gt;   3      0          1        35</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">hc</span>, labels <span class="op">=</span> <span class="cn">FALSE</span>, hang <span class="op">=</span> <span class="op">-</span><span class="fl">1</span>, main <span class="op">=</span> <span class="st">"Ward linkage"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-hclust-1.png" alt="" width="100%"></p>
-<p>The <code>"ward"</code> method here is R’s <code>"ward.D2"</code>; see <code><a href="reference/shoal_hclust.html">?shoal_hclust</a></code> for how each linkage maps onto <code><a href="https://rdrr.io/r/stats/hclust.html" class="external-link">stats::hclust()</a></code>.</p>
-</div>
-<div class="section level3">
-<h3 id="predicting-new-observations">Predicting new observations<a class="anchor" aria-label="anchor" href="#predicting-new-observations"></a>
-</h3>
-<p>Algorithms with a notion of a cluster centre can assign new rows. Fit on half of the data and predict the rest.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">train</span> <span class="op">&lt;-</span> <span class="va">x</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, by <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="va">test</span> <span class="op">&lt;-</span> <span class="va">x</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, by <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>, <span class="op">]</span></span>
-<span></span>
-<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/shoal_kmeans.html">shoal_kmeans</a></span><span class="op">(</span><span class="va">train</span>, k <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span>predicted <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">fit</span>, <span class="va">test</span><span class="op">)</span>, species <span class="op">=</span> <span class="va">iris</span><span class="op">$</span><span class="va">Species</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, by <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="co">#&gt;          species</span></span>
-<span><span class="co">#&gt; predicted setosa versicolor virginica</span></span>
-<span><span class="co">#&gt;         1      0         24         7</span></span>
-<span><span class="co">#&gt;         2      0          1        18</span></span>
-<span><span class="co">#&gt;         3     25          0         0</span></span></code></pre></div>
-<p>The density-based algorithms have no <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> method, because the capability genuinely does not exist for them.</p>
-</div>
-<div class="section level3">
-<h3 id="clusters-of-arbitrary-shape">Clusters of arbitrary shape<a class="anchor" aria-label="anchor" href="#clusters-of-arbitrary-shape"></a>
-</h3>
-<p>Classical methods assume convex, evenly sized clusters. The bundled <code>rings</code> data breaks that assumption: three concentric rings plus uniform noise. Density-based methods find the rings and label the noise, without being told how many groups to look for.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/par.html" class="external-link">par</a></span><span class="op">(</span>mfrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="reference/shoal_kmeans.html">shoal_kmeans</a></span><span class="op">(</span><span class="va">rings</span>, k <span class="op">=</span> <span class="fl">3L</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="fu"><a href="reference/shoal_hdbscan.html">shoal_hdbscan</a></span><span class="op">(</span><span class="va">rings</span>, min_cluster_size <span class="op">=</span> <span class="fl">15L</span>, min_samples <span class="op">=</span> <span class="fl">5L</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-rings-1.png" alt="" width="100%"></p>
-<p>Both plots come from the same <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> method: the shared class is what makes the comparison a one-liner. Noise points are drawn as grey crosses.</p>
-<p>HDBSCAN also returns GLOSH outlier scores, one per observation, and accepts <code>metric = "cosine"</code> for directional data.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">hdb</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/shoal_hdbscan.html">shoal_hdbscan</a></span><span class="op">(</span><span class="va">rings</span>, min_cluster_size <span class="op">=</span> <span class="fl">15L</span>, min_samples <span class="op">=</span> <span class="fl">5L</span><span class="op">)</span></span>
-<span><span class="va">hdb</span></span>
+<span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/shoal_hdbscan.html">shoal_hdbscan</a></span><span class="op">(</span><span class="va">rings</span>, min_cluster_size <span class="op">=</span> <span class="fl">15L</span>, min_samples <span class="op">=</span> <span class="fl">5L</span><span class="op">)</span></span>
+<span><span class="va">fit</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ── HDBSCAN Clustering</span></span>
 <span><span class="co">#&gt; Metric: "euclidean"</span></span>
@@ -286,119 +178,50 @@
 <span><span class="co">#&gt; Clusters: 3, Noise points: 26</span></span>
 <span><span class="co">#&gt; GLOSH outlier scores: median 0.079, max 0.965</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">hdb</span><span class="op">$</span><span class="va">outlier_scores</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. </span></span>
-<span><span class="co">#&gt;  0.0000  0.0000  0.0791  0.1783  0.3176  0.9654</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="plotting-more-than-two-dimensions">Plotting more than two dimensions<a class="anchor" aria-label="anchor" href="#plotting-more-than-two-dimensions"></a>
-</h3>
-<p>With more than two columns, <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> draws a scatter plot matrix. Pass <code>xcol</code> and <code>ycol</code> to pick a single pair instead. Here R’s <code>quakes</code> data, 1,000 seismic events near Fiji, clustered on location, depth and magnitude, is plotted by longitude and latitude.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">quakes_hdbscan</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/shoal_hdbscan.html">shoal_hdbscan</a></span><span class="op">(</span><span class="va">quakes</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"lat"</span>, <span class="st">"long"</span>, <span class="st">"depth"</span>, <span class="st">"mag"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
-<span><span class="va">quakes_hdbscan</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span></code></pre></div>
+<p><img src="reference/figures/README-rings-1.png" alt="" width="100%"></p>
+<p>Every algorithm returns the same shape of object: <code>cluster</code> is the assignment, <code>data</code> the matrix it was fitted to, and <code>params</code> records the call. The same <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> and <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> serve them all, so swapping one algorithm for another is a one-word change.</p>
+<p>The building blocks share the interface. Nearest neighbours of every point, under any of the metrics <code><a href="reference/shoal_dist.html">shoal_dist()</a></code> offers:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">nn</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/shoal_knn.html">shoal_knn</a></span><span class="op">(</span><span class="va">rings</span>, k <span class="op">=</span> <span class="fl">5L</span>, metric <span class="op">=</span> <span class="st">"manhattan"</span><span class="op">)</span></span>
+<span><span class="va">nn</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── HDBSCAN Clustering</span></span>
-<span><span class="co">#&gt; Metric: "euclidean"</span></span>
-<span><span class="co">#&gt; Parameters: alpha = 1, min_samples = 15, min_cluster_size = 15, boruvka = TRUE</span></span>
-<span><span class="co">#&gt; Clusters: 8, Noise points: 199</span></span>
-<span><span class="co">#&gt; GLOSH outlier scores: median 0.238, max 0.906</span></span>
+<span><span class="co">#&gt; ── k-Nearest Neighbours</span></span>
+<span><span class="co">#&gt; Metric: "manhattan", Search: "kdtree"</span></span>
+<span><span class="co">#&gt; Points: 1260, Neighbours: 5</span></span>
+<span><span class="co">#&gt; Distance to neighbour 5: min 0.03437, median 0.1164, max 1.959</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">quakes_hdbscan</span>, xcol <span class="op">=</span> <span class="st">"long"</span>, ycol <span class="op">=</span> <span class="st">"lat"</span>, asp <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-quakes-1.png" alt="" width="100%"></p>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">nn</span><span class="op">$</span><span class="va">id</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        1   2   3   4   5</span></span>
+<span><span class="co">#&gt; [1,]   2 165 236 183 283</span></span>
+<span><span class="co">#&gt; [2,]   1 236 165 183 283</span></span>
+<span><span class="co">#&gt; [3,] 265 233  59 224   9</span></span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="embedding-vectors">Embedding vectors<a class="anchor" aria-label="anchor" href="#embedding-vectors"></a>
-</h3>
-<p><code><a href="reference/shoal_evoc.html">shoal_evoc()</a></code> is for a different kind of input: rows that are embedding vectors, such as the output of a text or image model, where cosine geometry is the right model and the number of rows runs to thousands or millions. EVoC builds a nearest-neighbour graph, learns a compact node embedding from it and clusters that at several granularities at once. Every layer is returned, with a persistence score, and <code>layer</code> chooses which one populates <code>cluster</code>.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Synthetic embeddings: eight topics of unequal size as directions in 48</span></span>
-<span><span class="co"># dimensions, plus 100 scattered points that belong to none of them.</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span><span class="va">sizes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">400</span>, <span class="fl">300</span>, <span class="fl">250</span>, <span class="fl">200</span>, <span class="fl">150</span>, <span class="fl">100</span>, <span class="fl">60</span>, <span class="fl">40</span><span class="op">)</span></span>
-<span><span class="va">centres</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">sizes</span><span class="op">)</span> <span class="op">*</span> <span class="fl">48</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fl">0.6</span>, nrow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">sizes</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">emb</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
-<span>  <span class="va">centres</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">sizes</span><span class="op">)</span>, times <span class="op">=</span> <span class="va">sizes</span><span class="op">)</span>, <span class="op">]</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">sizes</span><span class="op">)</span> <span class="op">*</span> <span class="fl">48</span>, sd <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">48</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">runif</a></span><span class="op">(</span><span class="fl">100</span> <span class="op">*</span> <span class="fl">48</span>, <span class="op">-</span><span class="fl">1</span>, <span class="fl">1</span><span class="op">)</span> <span class="op">*</span> <span class="fl">0.6</span>, ncol <span class="op">=</span> <span class="fl">48</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">truth</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">sizes</span><span class="op">)</span>, times <span class="op">=</span> <span class="va">sizes</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="cn">NA</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">ev</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/shoal_evoc.html">shoal_evoc</a></span><span class="op">(</span><span class="va">emb</span>, min_cluster_size <span class="op">=</span> <span class="fl">15L</span><span class="op">)</span></span>
-<span><span class="va">ev</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ── EVoC Clustering</span></span>
-<span><span class="co">#&gt; Metric: "cosine"</span></span>
-<span><span class="co">#&gt; Parameters: n_neighbors = 15, noise_level = 0.5, min_cluster_size = 15,</span></span>
-<span><span class="co">#&gt; min_samples = 5, n_epochs = 50, seed = 1</span></span>
-<span><span class="co">#&gt; Clusters: 8, Noise points: 7</span></span>
-<span><span class="co">#&gt; Layers (finest first, ✔ = selected):</span></span>
-<span><span class="co">#&gt;   1: 10 clusters, 371 noise, persistence 0</span></span>
-<span><span class="co">#&gt; ✔ 2: 8 clusters, 7 noise, persistence 346.8</span></span></code></pre></div>
-<p>The finest layer over-fragments and marks hundreds of points as noise; the most persistent layer, selected by default, is the useful one. Comparing it with the truth shows every topic recovered exactly, down to the one with 40 members. The scattered points are the weak spot: most are absorbed into the nearest topic rather than flagged, since at this size a handful of stray directions rarely forms a density gap of its own.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span>cluster <span class="op">=</span> <span class="va">ev</span><span class="op">$</span><span class="va">cluster</span>, <span class="va">truth</span>, useNA <span class="op">=</span> <span class="st">"ifany"</span><span class="op">)</span></span>
-<span><span class="co">#&gt;        truth</span></span>
-<span><span class="co">#&gt; cluster   1   2   3   4   5   6   7   8 &lt;NA&gt;</span></span>
-<span><span class="co">#&gt;    1      0   0   0 200   0   0   0   0    9</span></span>
-<span><span class="co">#&gt;    2      0 300   0   0   0   0   0   0    9</span></span>
-<span><span class="co">#&gt;    3      0   0   0   0   0   0  60   0    4</span></span>
-<span><span class="co">#&gt;    4      0   0   0   0   0   0   0  40    3</span></span>
-<span><span class="co">#&gt;    5    400   0   0   0   0   0   0   0    7</span></span>
-<span><span class="co">#&gt;    6      0   0   0   0 150   0   0   0   18</span></span>
-<span><span class="co">#&gt;    7      0   0   0   0   0 100   0   0    7</span></span>
-<span><span class="co">#&gt;    8      0   0 250   0   0   0   0   0   36</span></span>
-<span><span class="co">#&gt;    &lt;NA&gt;   0   0   0   0   0   0   0   0    7</span></span></code></pre></div>
-<p>Every layer stays available on the result, so a different granularity is an index away rather than a refit.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">ev</span><span class="op">$</span><span class="va">layers</span>, <span class="kw">function</span><span class="op">(</span><span class="va">l</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">l</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">l</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 10  8</span></span>
-<span><span class="va">ev</span><span class="op">$</span><span class="va">persistence</span></span>
-<span><span class="co">#&gt; [1]   0.0000 346.7937</span></span></code></pre></div>
-<p>The upstream default <code>min_cluster_size = 5</code> is calibrated for large inputs and over-fragments collections this small; raising it is the first thing to try.</p>
-</div>
+<div class="section level2">
+<h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>
+</h2>
+<ul>
+<li>
+<code><a href="articles/shoal.html">vignette("shoal")</a></code> introduces each algorithm in turn, with a picture of what it finds, then the distance and neighbour tools and how to choose the number of clusters.</li>
+<li>
+<code><a href="articles/distances.html">vignette("distances")</a></code> is about the choices around <code><a href="reference/shoal_dist.html">shoal_dist()</a></code> and <code><a href="reference/shoal_knn.html">shoal_knn()</a></code>: which metric, matrix or neighbours, tree or scan, and what to build from a neighbour result.</li>
+<li>
+<code><a href="articles/umap.html">vignette("umap")</a></code> shows what embedding wide data with UMAP does to each algorithm.</li>
+<li>
+<code><a href="articles/evoc.html">vignette("evoc")</a></code> clusters real sentence embeddings with EVoC and compares it with the alternatives.</li>
+<li>The <a href="https://belian-earth.github.io/shoal/reference/">reference</a> documents every function.</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
 </h2>
-<p>Every algorithm is benchmarked against the best R alternative and, where one exists, the Python one, at matched settings: the same k, restarts, iteration cap and linkage. Timings are medians of three runs on 20 cores and 62 GB, from 500 to 50,000 points, on Gaussian blobs in 2 and 10 dimensions and, for EVoC, on embedding-like data in 48. Scripts and data generation are in <code>bench/</code>; the 50,000-point Ward rows need about 30 GB of RAM.</p>
-<figure><img src="https://github.com/belian-earth/shoal/blob/main/bench/scaling.png?raw=true" alt="Scaling benchmark"><figcaption aria-hidden="true">
-Scaling benchmark
-</figcaption></figure><p>What the panels show, at 50,000 points unless noted:</p>
-<ul>
-<li>
-<strong>DBSCAN</strong>: 6 to 9 times faster than the dbscan package and 1.5 to 5 times faster than scikit-learn, the gap growing with dimension.</li>
-<li>
-<strong>HDBSCAN</strong>: 20 times faster than scikit-learn in 2 dimensions and 2 times in 10. The dbscan package builds a full distance matrix and is 40 times slower at 20,000 points, its largest feasible size here.</li>
-<li>
-<strong>k-means</strong>: level with base R’s Hartigan-Wong in 2 dimensions and 2 times faster in 10, with identical within-cluster sums of squares. scikit-learn’s times are erratic at these sizes because its OpenMP threading oversubscribes a 20-core machine.</li>
-<li>
-<strong>Gaussian mixture</strong>: 20 to 170 times faster than mclust, which fits a hierarchical initialisation first, and level with scikit-learn from about 5,000 points, having been several times faster below that.</li>
-<li>
-<strong>Ward</strong>: 2.5 to 4.5 times faster than base R and about 2 times faster than SciPy. All three run the same nearest-neighbour-chain algorithm, so the differences are in computing the distances that feed it. Given raw data, <code><a href="reference/shoal_hclust.html">shoal_hclust()</a></code> writes the distances straight into the buffer the clustering consumes, so at 50,000 points it holds one 10 GB vector where <code><a href="https://rdrr.io/r/stats/dist.html" class="external-link">stats::dist()</a></code> plus <code><a href="https://rdrr.io/r/stats/hclust.html" class="external-link">stats::hclust()</a></code> holds two, and that saved copy is most of the gap.</li>
-<li>
-<strong>Distances</strong>: <code><a href="reference/shoal_dist.html">shoal_dist()</a></code> is 2 times faster than <code><a href="https://rdrr.io/r/stats/dist.html" class="external-link">stats::dist()</a></code> in 2 dimensions and 4.5 times in 10, and level with SciPy’s <code>pdist()</code>, which edges it in 2 dimensions where the work is almost all memory traffic. The result is written straight into the R vector, one pass, in parallel.</li>
-<li>
-<strong>EVoC</strong>: level with the reference implementation from about 20,000 points, and several times faster below that, where the reference’s compiled kernels have not amortised. The reference here runs on 20 numba threads.</li>
-</ul>
-<p>Two things to know when the data is wide:</p>
-<ul>
-<li>The spatial indexes behind DBSCAN and HDBSCAN degrade as dimension grows, as they do everywhere. Above a few dozen columns, HDBSCAN’s default Boruvka tree search is slower than the plain alternative, so pass <code>boruvka = FALSE</code> there. See <code><a href="reference/shoal_hdbscan.html">?shoal_hdbscan</a></code>.</li>
-<li>For high-dimensional embedding vectors, <code><a href="reference/shoal_evoc.html">shoal_evoc()</a></code> is the right tool and is orders of magnitude faster than HDBSCAN on the raw vectors.</li>
-</ul>
+<p>shoal is built for speed. Every clustering algorithm, the distance matrix and the nearest-neighbour search are benchmarked against the best R alternative and, where one exists, the Python one, at matched settings. Each either matches or improves on them, by margins that grow with the size and dimension of the data. The results, the scaling figure and the scripts that produce them are in <a href="https://github.com/belian-earth/shoal/blob/main/bench/README.md" class="external-link"><code>bench/README.md</code></a>.</p>
+<p>The Rust backends run their parallel stages on a thread pool owned by the package, which by default uses every logical core. <code>shoal_threads(n)</code> resizes it for the session; <code>options(shoal.threads = n)</code> or <code>RAYON_NUM_THREADS</code> set the default before the package loads. Results never depend on the thread count.</p>
 </div>
 <div class="section level2">
-<h2 id="threads">Threads<a class="anchor" aria-label="anchor" href="#threads"></a>
+<h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
 </h2>
-<p>The Rust backends run their parallel stages on a thread pool owned by the package: EVoC’s neighbour search, spanning tree and node embedding; DBSCAN’s neighbour queries; HDBSCAN’s core distances and spanning tree; k-means’ assignment step; <code><a href="reference/shoal_dist.html">shoal_dist()</a></code> and <code><a href="reference/shoal_silhouette.html">shoal_silhouette()</a></code>. By default it uses every logical core. <code>shoal_threads(n)</code> resizes it for the session and <code><a href="reference/shoal_threads.html">shoal_threads()</a></code> reports the current size; <code>options(shoal.threads = n)</code> or <code>RAYON_NUM_THREADS</code> set the default before the package loads. Results never depend on the thread count.</p>
-</div>
-<div class="section level2">
-<h2 id="development-notes">Development notes<a class="anchor" aria-label="anchor" href="#development-notes"></a>
-</h2>
-<p><code>devtools::load_all()</code> compiles the Rust code without optimisation, because pkgbuild sets <code>DEBUG</code> while it builds. That is fine for correctness but timings from a <code>load_all()</code> session are misleading, by an order of magnitude or more. For anything performance-related install the package first:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="va">NOT_CRAN</span><span class="op">=</span>true <span class="ex">R</span> CMD INSTALL .</span></code></pre></div>
-<p>After adding or changing a <code>#[extendr]</code> function, regenerate <code>R/extendr-wrappers.R</code> before <code>devtools::document()</code>; with the package’s current rextendr configuration that is <code>rextendr:::make_wrappers("shoal", "shoal", "R/extendr-wrappers.R", use_symbols = TRUE)</code> from a <code>load_all()</code> session. Keep the Rust doc comments on those bindings as plain <code>//</code> comments, or roxygen will document the internal wrappers.</p>
-<p>The EVoC port lives in <code>src/rust/evoc-core/</code>; its parity suite against the Python reference is under <code>evoc-port/</code> and runs with <code>cargo test --release</code> from <code>evoc-port/parity/</code>.</p>
+<p>Build and workflow notes for working on the package, including the one about timing, are in <a href="https://github.com/belian-earth/shoal/blob/main/DEVELOPMENT.md" class="external-link"><code>DEVELOPMENT.md</code></a>.</p>
 </div>
 <div class="section level2">
 <h2 id="acknowledgements">Acknowledgements<a class="anchor" aria-label="anchor" href="#acknowledgements"></a>

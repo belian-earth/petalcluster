@@ -1,6 +1,8 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://belian-earth.github.io/shoal/404.html</loc></url>
+<url><loc>https://belian-earth.github.io/shoal/DEVELOPMENT.html</loc></url>
 <url><loc>https://belian-earth.github.io/shoal/LICENSE.html</loc></url>
+<url><loc>https://belian-earth.github.io/shoal/articles/distances.html</loc></url>
 <url><loc>https://belian-earth.github.io/shoal/articles/evoc.html</loc></url>
 <url><loc>https://belian-earth.github.io/shoal/articles/index.html</loc></url>
 <url><loc>https://belian-earth.github.io/shoal/articles/shoal.html</loc></url>
@@ -23,6 +25,7 @@
 <url><loc>https://belian-earth.github.io/shoal/reference/shoal_hclust.html</loc></url>
 <url><loc>https://belian-earth.github.io/shoal/reference/shoal_hdbscan.html</loc></url>
 <url><loc>https://belian-earth.github.io/shoal/reference/shoal_kmeans.html</loc></url>
+<url><loc>https://belian-earth.github.io/shoal/reference/shoal_knn.html</loc></url>
 <url><loc>https://belian-earth.github.io/shoal/reference/shoal_metrics.html</loc></url>
 <url><loc>https://belian-earth.github.io/shoal/reference/shoal_palette.html</loc></url>
 <url><loc>https://belian-earth.github.io/shoal/reference/shoal_silhouette.html</loc></url>

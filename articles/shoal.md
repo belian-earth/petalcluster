@@ -7,7 +7,9 @@ points, where an algorithm has them, are `NA` in the `cluster` vector.
 
 This vignette introduces each algorithm in turn: what it assumes, the
 parameters that matter, and what its clusters look like on data chosen
-to show its character.
+to show its character. It then turns to the tools around them: the
+distance matrix and nearest-neighbour search the algorithms rest on, and
+the indices for choosing the number of clusters.
 
 ``` r
 
@@ -355,6 +357,57 @@ EVoC is the wrong tool for ordinary tabular data: it assumes cosine
 geometry and is calibrated for thousands to millions of rows. The
 upstream default `min_cluster_size = 5` over-fragments small
 collections, so raise it first.
+
+## Distances and neighbours: `shoal_dist()` and `shoal_knn()`
+
+Both take the same nine metrics: the six of
+[`stats::dist()`](https://rdrr.io/r/stats/dist.html), cosine,
+correlation and Mahalanobis.
+[`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md)
+returns a plain `dist`, so it drops into
+[`cmdscale()`](https://rdrr.io/r/stats/cmdscale.html),
+[`cluster::pam()`](https://rdrr.io/pkg/cluster/man/pam.html) or anything
+else that wants one.
+[`shoal_knn()`](https://belian-earth.github.io/shoal/reference/shoal_knn.md)
+keeps only the `k` nearest neighbours of each row, so where a distance
+matrix stops being possible somewhere in the tens of thousands of rows,
+a neighbour search does not. It is exact, by a kd-tree in a few
+dimensions and a parallel scan beyond that, and the two give identical
+results.
+[`vignette("distances")`](https://belian-earth.github.io/shoal/articles/distances.md)
+goes through the choice of metric and what a neighbour result can be
+turned into.
+
+``` r
+
+nn <- shoal_knn(rings, k = 4L)
+nn
+#> 
+#> ── k-Nearest Neighbours
+#> Metric: "euclidean", Search: "kdtree"
+#> Points: 1260, Neighbours: 4
+#> Distance to neighbour 4: min 0.01929, median 0.08133, max 1.39
+head(nn$id, 3)
+#>        1   2   3   4
+#> [1,]   2 165 236 183
+#> [2,]   1 236 165 183
+#> [3,] 265   9 275  59
+```
+
+Its [`plot()`](https://rdrr.io/r/graphics/plot.default.html) is the
+standard way to choose `eps` for DBSCAN: each point’s distance to its
+`k`-th neighbour, sorted. Points on a ring have a small, steady value;
+the noise points sit on the sharp rise at the right. `eps` belongs at
+the elbow, which here is the 0.2 used above, with `min_samples = k + 1`
+because DBSCAN counts the point itself.
+
+``` r
+
+plot(nn)
+abline(h = 0.2, lty = 2)
+```
+
+![](shoal_files/figure-html/knn-plot-1.png)
 
 ## Choosing the number of clusters
 

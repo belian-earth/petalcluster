@@ -34,6 +34,12 @@ components `cluster` (integer vector of cluster IDs, `NA` for noise),
 `n_clusters`, `n_noise`, `data` (the input matrix), `algorithm`,
 `params`, and `metric`.
 
+## See also
+
+[`shoal_knn()`](https://belian-earth.github.io/shoal/reference/shoal_knn.md),
+whose [`plot()`](https://rdrr.io/r/graphics/plot.default.html) method
+draws the k-nearest-neighbour distance curve used to choose `eps`.
+
 ## Examples
 
 ``` r

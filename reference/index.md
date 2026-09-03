@@ -19,10 +19,14 @@ Clustering algorithms.
 
 ## Distances
 
-Pairwise distance matrices.
+Pairwise distance matrices and nearest-neighbour search.
 
 - [`shoal_dist()`](https://belian-earth.github.io/shoal/reference/shoal_dist.md)
   : Pairwise Distance Matrix
+- [`shoal_knn()`](https://belian-earth.github.io/shoal/reference/shoal_knn.md)
+  [`print(`*`<shoal_knn>`*`)`](https://belian-earth.github.io/shoal/reference/shoal_knn.md)
+  [`plot(`*`<shoal_knn>`*`)`](https://belian-earth.github.io/shoal/reference/shoal_knn.md)
+  : k-Nearest Neighbours
 
 ## Validation
 
